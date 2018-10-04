@@ -39,23 +39,23 @@ public class CornZoomer extends Zoomer {
                                 "CORN_POLLEN_ALLERGEN_IGA",
                                 "CORN_CRY_PROTEIN_IGA",
                                 "CORN_WHEAT_OVERLAP_EPITOPE_IGA",
-                                "CORN_ZEIN_IGA",
+                                "CORN_ZEIN_IGA"
                                 };
         
         // class , protein , info_id
         conditions = new Condition[testcode.length / 2];
-        conditions[0] = new Condition("albumin" , "" , "");
-        conditions[1] = new Condition("globulin" , "" , "");
-        conditions[2] = new Condition("glutenin" , "" , "");
-        conditions[3] = new Condition("" , "expansin" , "");
-        conditions[4] = new Condition("" , "endochitinase" , "");
-        conditions[5] = new Condition("" , "profilin" , "");
-        conditions[6] = new Condition("" , "lipid-transfer" , "");
-        conditions[7] = new Condition("" , "thioredoxin" , "");
-        conditions[8] = new Condition("" , "exopolygalacturonase" , "");
-        conditions[9] = new Condition("" , "pollen" , "");
-        conditions[10] = new Condition("" , "cry1a,cry1ab,cry2ab,cry3b,cry9c" , "");
-        conditions[11] = new Condition("wheat,corn epitope" , "" , "");
-        conditions[12] = new Condition("zein" , "" , "");
+        conditions[0] = new Condition(".*albumin.*" , "" , "" , "");
+        conditions[1] = new Condition(".*globulin.*" , "" , "", "");
+        conditions[2] = new Condition(".*glutenin.*" , "" , "", "");
+        conditions[3] = new Condition("" , ".*expansin.*" , "", "");
+        conditions[4] = new Condition("" , ".*endochitinase.*" ,"" ,"");
+        conditions[5] = new Condition("" , ".*profilin.*" , "", "");
+        conditions[6] = new Condition("" , ".*lipid-transfer.*" , "", "");
+        conditions[7] = new Condition("" , ".*thioredoxin.*" , "", "");
+        conditions[8] = new Condition("" , ".*exopolygalacturonase.*" , "", "");
+        conditions[9] = new Condition("" , ".*pollen.*" , "", "");
+        conditions[10] = new Condition("" , ".*cry1a.*%.*cry1ab.*%.*cry2ab.*%.*cry3b.*%.*cry9c.*" , "", "");
+        conditions[11] = new Condition(".*wheat.*%.*corn epitope.*" , "" , "", "");
+        conditions[12] = new Condition(".*zein.*" , "" , "", "");
     }
 }

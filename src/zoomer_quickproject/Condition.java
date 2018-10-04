@@ -10,10 +10,11 @@ package zoomer_quickproject;
  * @author Wei Wang
  */
 public class Condition {
-    public String class_name , protein_name ,info_id;
-    public Condition(String class_name , String protein_name , String info_id){
+    public String class_name , protein_name ,info_id ,seq;
+    public Condition(String class_name , String protein_name , String info_id ,String seq){
         this.class_name = class_name;
         this.protein_name = protein_name;
         this.info_id = info_id;
+        this.seq = seq;
     }
 }

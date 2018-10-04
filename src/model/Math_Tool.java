@@ -5,8 +5,8 @@
  */
 package model;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -14,16 +14,25 @@ import java.util.List;
  */
 public class Math_Tool {
 
-//    public static void main(String[] args) {
-//        List<Float> list = new ArrayList();
-//        for (int i = 1; i <= 99; i++) {
-//            list.add(i + 0.0f);
-//        }
-//
-//        System.out.println(findMedian(list));
-//
-//    }
+    public static void main(String[] args) {
+        
 
+        System.out.println(Pattern.matches("corn_run_.*" ,"corn_run234".toLowerCase()));
+
+    }
+    
+    public static float avg(List<Float> list){
+        if(list == null || list.size() == 0){
+            return -1;
+        }
+        float sum = 0;
+        for(float i : list){
+            sum += i;
+        }
+        return sum / list.size();
+    }
+    
+    
     public static float findMedian(List<Float> list) {
         if (list == null || list.size() == 0) {
             return -1.0f;
