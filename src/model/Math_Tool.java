@@ -14,12 +14,12 @@ import java.util.regex.Pattern;
  */
 public class Math_Tool {
 
-    public static void main(String[] args) {
-        
-
-        System.out.println(Pattern.matches("corn_run_.*" ,"corn_run234".toLowerCase()));
-
-    }
+//    public static void main(String[] args) {
+//        
+//
+//        System.out.println("184574".matches((".*[a-z].*")));
+//
+//    }
     
     public static float avg(List<Float> list){
         if(list == null || list.size() == 0){

@@ -11,9 +11,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -37,7 +39,20 @@ public class Zoomer_QuickProject {
     private String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut";
 
     public static void main(String[] args) throws SQLException, IOException {
-        run("corn_run_23",ZOOMER_TEST.CORN_ZOOMER );
+        
+        ZOOMER_TEST[] test = {ZOOMER_TEST.CORN_ZOOMER , ZOOMER_TEST.DAIRY_ZOOMER ,ZOOMER_TEST.EGG_ZOOMER ,ZOOMER_TEST.LECTIN_ZOOMER ,ZOOMER_TEST.PEANUT_ZOOMER};
+        String[] table = {"corn_run_23","dairy_run_23","egg_run_23","lectin_run_23","peanut_run_23"};
+        
+        
+        for(int i = 0 ; i < test.length ; i++){
+            run(table[i],test[i] );
+        }
+        
+        
+        
+        
+        
+//        run("corn_run_23",ZOOMER_TEST.CORN_ZOOMER );
 ////        Zoomer_QuickProject test = new Zoomer_QuickProject(new DairyZoomer(), "dairy_run_23");
 ////        Zoomer_QuickProject test = new Zoomer_QuickProject(new EggZoomer(), "egg_run_23");
 ////        Zoomer_QuickProject test = new Zoomer_QuickProject(new LectinZoomer(), "lectin_run_23");
@@ -62,7 +77,9 @@ public class Zoomer_QuickProject {
     private String table_name, test_name;
     private Condition[] conditions;
     private Map<String, List<Float>> negative_map;  // location  , raw data
-
+    
+    private Set<String> exclude_set ;
+            
     private Zoomer_QuickProject(Zoomer test, String table_name) {
         this.test_name = test.test_name;
         this.test_code = test.testcode;
@@ -73,6 +90,7 @@ public class Zoomer_QuickProject {
         this.map_raw = new HashMap();
         this.loc_sample_map = new HashMap();
         this.negative_map = new HashMap();
+        this.exclude_set = new HashSet();
     }
 
     private static void run(String table_name, ZOOMER_TEST test) {
@@ -197,6 +215,11 @@ public class Zoomer_QuickProject {
                     String location = location_type[1];
                     String type = location_type[2];
                     String key = location + "_" + type;
+                    
+                    if(exclude_set.contains(location)){
+                        continue;
+                    }
+                    
                     if (negative_map.containsKey(key)) {
                         negative_map.get(key).add(signal);
                     } else {
@@ -220,6 +243,11 @@ public class Zoomer_QuickProject {
                         float signal = rs.getFloat(j);
                         String[] location_type = rs.getMetaData().getColumnName(j).split("_");
                         String location = location_type[1];
+                        if(exclude_set.contains(location)){
+                            continue;
+                        }
+                        
+                        
                         int type = location_type[2].equals("igg") ? 0 : 1;
                         map_raw.get(test_code[testId_list.get(type)]).get(location).add(signal);
 
@@ -314,7 +342,14 @@ public class Zoomer_QuickProject {
         System.out.println(sql);
         ResultSet rs = db.read(sql);
         while (rs.next()) {
-            loc_sample_map.put(rs.getString(1), new String[]{rs.getString(3), rs.getString(2)});
+            String sample = rs.getString(2).toLowerCase();
+            String location = rs.getString(1);
+            if(sample.matches(".*[a-z].*")){
+                exclude_set.add(location);
+                continue;
+            }
+            
+            loc_sample_map.put(location, new String[]{rs.getString(3), sample});
         }
         db.close();
 
