@@ -5,6 +5,13 @@
  */
 package zoomer_quickproject;
 
+import Zoomer.Condition;
+import Zoomer.CornZoomer;
+import Zoomer.DairyZoomer;
+import Zoomer.EggZoomer;
+import Zoomer.LectinZoomer;
+import Zoomer.PeanutZoomer;
+import Zoomer.Zoomer;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -81,9 +88,9 @@ public class Zoomer_QuickProject {
     private Set<String> exclude_set ;
             
     private Zoomer_QuickProject(Zoomer test, String table_name) {
-        this.test_name = test.test_name;
-        this.test_code = test.testcode;
-        this.conditions = test.conditions;
+        this.test_name = test.getTestName();
+        this.test_code = test.getTestCode();
+        this.conditions = test.getCondition();
         this.table_name = table_name;
 
         this.map_unit = new LinkedHashMap();
@@ -230,10 +237,10 @@ public class Zoomer_QuickProject {
 
             // init raw
             for (int i = 0; i < conditions.length; i++) {
-                String[] class_cur = conditions[i].class_name.split("%");
-                String[] protein_cur = conditions[i].protein_name.split("%");
-                String[] info_id_cur = conditions[i].info_id.split("%");
-                String[] seq_cur = conditions[i].seq.split("%");
+                String[] class_cur = conditions[i].getClassName().split("%");
+                String[] protein_cur = conditions[i].getProteinName().split("%");
+                String[] info_id_cur = conditions[i].getInfoId().split("%");
+                String[] seq_cur = conditions[i].getSeq().split("%");
                 if (judge(class_cur, protein_cur, info_id_cur, seq_cur, class_name, protein_name, info_id, seq)) {
                     List<Integer> testId_list = new ArrayList();
                     testId_list.add(i);//igg
