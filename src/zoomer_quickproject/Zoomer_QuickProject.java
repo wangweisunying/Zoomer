@@ -47,19 +47,19 @@ public class Zoomer_QuickProject {
 
     public static void main(String[] args) throws SQLException, IOException {
         
-        ZOOMER_TEST[] test = {ZOOMER_TEST.CORN_ZOOMER , ZOOMER_TEST.DAIRY_ZOOMER ,ZOOMER_TEST.EGG_ZOOMER ,ZOOMER_TEST.LECTIN_ZOOMER ,ZOOMER_TEST.PEANUT_ZOOMER};
-        String[] table = {"corn_run_23","dairy_run_23","egg_run_23","lectin_run_23","peanut_run_23"};
+//        ZOOMER_TEST[] test = {ZOOMER_TEST.CORN_ZOOMER , ZOOMER_TEST.DAIRY_ZOOMER ,ZOOMER_TEST.EGG_ZOOMER ,ZOOMER_TEST.LECTIN_ZOOMER ,ZOOMER_TEST.PEANUT_ZOOMER};
+//        String[] table = {"corn_run_23","dairy_run_23","egg_run_23","lectin_run_23","peanut_run_23"};
+//        
+//        
+//        for(int i = 0 ; i < test.length ; i++){
+//            run(table[i],test[i] );
+//        }
         
         
-        for(int i = 0 ; i < test.length ; i++){
-            run(table[i],test[i] );
-        }
         
         
         
-        
-        
-//        run("corn_run_23",ZOOMER_TEST.CORN_ZOOMER );
+        run("corn_run_23",ZOOMER_TEST.CORN_ZOOMER );
 ////        Zoomer_QuickProject test = new Zoomer_QuickProject(new DairyZoomer(), "dairy_run_23");
 ////        Zoomer_QuickProject test = new Zoomer_QuickProject(new EggZoomer(), "egg_run_23");
 ////        Zoomer_QuickProject test = new Zoomer_QuickProject(new LectinZoomer(), "lectin_run_23");
@@ -84,6 +84,8 @@ public class Zoomer_QuickProject {
     private String table_name, test_name;
     private Condition[] conditions;
     private Map<String, List<Float>> negative_map;  // location  , raw data
+    private Map< String , double[]> equation_parameter_map; // String [a , b]
+    
     
     private Set<String> exclude_set ;
             
@@ -91,6 +93,10 @@ public class Zoomer_QuickProject {
         this.test_name = test.getTestName();
         this.test_code = test.getTestCode();
         this.conditions = test.getCondition();
+        this.equation_parameter_map = test.getEquationParameterMap();
+        
+        
+        
         this.table_name = table_name;
 
         this.map_unit = new LinkedHashMap();
@@ -282,6 +288,11 @@ public class Zoomer_QuickProject {
                 float avg_raw = Math_Tool.avg(list);
                 float avg_neg = Math_Tool.avg(negative_map.get(location + "_" + type));
                 float unit = avg_raw * 3000 / avg_neg;
+                
+                //apply equation
+                double[] para = equation_parameter_map.get(test);
+                unit = (float)(unit * para[0] + para[1]);
+
                 map_unit.get(test).put(location, unit);
             }
         }
