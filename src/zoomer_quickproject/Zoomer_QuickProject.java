@@ -12,11 +12,15 @@ import Zoomer.EggZoomer;
 import Zoomer.LectinZoomer;
 import Zoomer.PeanutZoomer;
 import Zoomer.Zoomer;
+import java.awt.Desktop;
+import java.io.File;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -30,9 +34,13 @@ import model.DataBaseCon;
 import model.ExcelOperation;
 import model.Math_Tool;
 import model.V7DataBaseCon;
-import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.ComparisonOperator;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 
 /**
  *
@@ -43,30 +51,37 @@ public class Zoomer_QuickProject {
     /**
      * @param args the command line arguments
      */
-    private String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut";
+    private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut";
 
-    public static void main(String[] args) throws SQLException, IOException {
-        
-//        ZOOMER_TEST[] test = {ZOOMER_TEST.CORN_ZOOMER , ZOOMER_TEST.DAIRY_ZOOMER ,ZOOMER_TEST.EGG_ZOOMER ,ZOOMER_TEST.LECTIN_ZOOMER ,ZOOMER_TEST.PEANUT_ZOOMER};
-//        String[] table = {"corn_run_23","dairy_run_23","egg_run_23","lectin_run_23","peanut_run_23"};
-//        
-//        
-//        for(int i = 0 ; i < test.length ; i++){
-//            run(table[i],test[i] );
-//        }
-        
-        
-        
-        
-        
-        run("corn_run_23",ZOOMER_TEST.CORN_ZOOMER );
-////        Zoomer_QuickProject test = new Zoomer_QuickProject(new DairyZoomer(), "dairy_run_23");
-////        Zoomer_QuickProject test = new Zoomer_QuickProject(new EggZoomer(), "egg_run_23");
-////        Zoomer_QuickProject test = new Zoomer_QuickProject(new LectinZoomer(), "lectin_run_23");
-//        Zoomer_QuickProject test = new Zoomer_QuickProject(new PeanutZoomer(), "peanut_run_23");
-//        test.init();
-//        test.getData();
-//        test.exportExcel();
+    public static void main(String[] args) throws SQLException, IOException, Exception {
+//        ZOOMER_TEST[] test = {ZOOMER_TEST.DAIRY_ZOOMER};
+//        String[] table = {"dairy_run_23"};
+        ZOOMER_TEST[] test = {ZOOMER_TEST.CORN_ZOOMER, ZOOMER_TEST.DAIRY_ZOOMER, ZOOMER_TEST.EGG_ZOOMER, ZOOMER_TEST.LECTIN_ZOOMER, ZOOMER_TEST.PEANUT_ZOOMER};
+        String[] table = {"corn_run_23", "dairy_run_23", "egg_run_23", "lectin_run_23", "peanut_run_23"};
+
+//      
+        List<Chunk> list = new ArrayList();
+        for (int i = 0; i < test.length; i++) {
+            list.add(run(table[i], test[i]));
+        }
+        exportExcel(list);
+    }
+
+    private static class Chunk {
+
+        private String testName , tableName;
+        private Map<String, Map<String, Float>> map_unit;
+        private String[] test_code;
+        private Map<String, String[]> loc_sample_map;
+
+        private Chunk(String tableName ,String testName, String[] test_code, Map<String, String[]> loc_sample_map, Map<String, Map<String, Float>> map_unit) {
+            this.tableName = tableName;
+            this.testName = testName;
+            this.test_code = test_code;
+            this.loc_sample_map = loc_sample_map;
+            this.map_unit = map_unit;
+        }
+
     }
 
     private static enum ZOOMER_TEST {
@@ -77,26 +92,23 @@ public class Zoomer_QuickProject {
         EGG_ZOOMER
     }
 
-    private Map<String, Map<String, Float>> map_unit;
+    private static Map<String, Map<String, Float>> map_unit;
+    private static Map<String, String[]> loc_sample_map; // test_name , pillarId ,julien Barcode
+    private static String[] test_code;
+    private static String table_name, test_name;
     private Map<String, Map<String, List<Float>>> map_raw;
-    private Map<String, String[]> loc_sample_map; // test_name , pillarId ,julien Barcode
-    private String[] test_code;
-    private String table_name, test_name;
     private Condition[] conditions;
     private Map<String, List<Float>> negative_map;  // location  , raw data
-    private Map< String , double[]> equation_parameter_map; // String [a , b]
-    
-    
-    private Set<String> exclude_set ;
-            
+    private Map< String, double[]> equation_parameter_map; // String [a , b]
+
+    private Set<String> exclude_set;
+
     private Zoomer_QuickProject(Zoomer test, String table_name) {
         this.test_name = test.getTestName();
         this.test_code = test.getTestCode();
         this.conditions = test.getCondition();
         this.equation_parameter_map = test.getEquationParameterMap();
-        
-        
-        
+
         this.table_name = table_name;
 
         this.map_unit = new LinkedHashMap();
@@ -106,106 +118,148 @@ public class Zoomer_QuickProject {
         this.exclude_set = new HashSet();
     }
 
-    private static void run(String table_name, ZOOMER_TEST test) {
-        try {
-            Zoomer_QuickProject zoomer_ctroller;
-            boolean precheck;
-            switch (test) {
-                case CORN_ZOOMER:
-                    precheck = Pattern.matches("corn_run_.*", table_name.toLowerCase());
-                    zoomer_ctroller = new Zoomer_QuickProject(new CornZoomer(), table_name);
-                    break;
-                case DAIRY_ZOOMER:
-                    precheck = Pattern.matches("dairy_run_.*", table_name.toLowerCase());
-                    zoomer_ctroller = new Zoomer_QuickProject(new DairyZoomer(), table_name);
-                    break;
-                case LECTIN_ZOOMER:
-                    precheck = Pattern.matches("lectin_run_.*", table_name.toLowerCase());
-                    zoomer_ctroller = new Zoomer_QuickProject(new LectinZoomer(), table_name);
-                    break;
-                case PEANUT_ZOOMER:
-                    precheck = Pattern.matches("peanut_run_.*", table_name.toLowerCase());
-                    zoomer_ctroller = new Zoomer_QuickProject(new PeanutZoomer(), table_name);
-                    break;
-                case EGG_ZOOMER:
-                    precheck = Pattern.matches("egg_run_.*", table_name.toLowerCase());
-                    zoomer_ctroller = new Zoomer_QuickProject(new EggZoomer(), table_name);
-                    break;
-                default:
-                    precheck = false;
-                    zoomer_ctroller = null;
-                    System.out.println("excel format input is wrong!!");
-                    break;
-            }
-            if(zoomer_ctroller == null){
-                System.out.println("testZoomer type input is wrong!");
-                return;
-            }
-            if(!precheck){
-                System.out.println(" table_name input format is wrong! or is not match the test you select !");
-                return;
-            
-            }
-            
+    private static Chunk run(String table_name, ZOOMER_TEST test) throws SQLException {
 
-            zoomer_ctroller.init();
-            zoomer_ctroller.getData();
-            zoomer_ctroller.exportExcel();
-        } catch (SQLException ex) {
-            Logger.getLogger(Zoomer_QuickProject.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(Zoomer_QuickProject.class.getName()).log(Level.SEVERE, null, ex);
+        Zoomer_QuickProject zoomer_ctroller;
+        boolean precheck;
+        switch (test) {
+            case CORN_ZOOMER:
+                precheck = Pattern.matches("corn_run_.*", table_name.toLowerCase());
+                zoomer_ctroller = new Zoomer_QuickProject(new CornZoomer(), table_name);
+                break;
+            case DAIRY_ZOOMER:
+                precheck = Pattern.matches("dairy_run_.*", table_name.toLowerCase());
+                zoomer_ctroller = new Zoomer_QuickProject(new DairyZoomer(), table_name);
+                break;
+            case LECTIN_ZOOMER:
+                precheck = Pattern.matches("lectin_run_.*", table_name.toLowerCase());
+                zoomer_ctroller = new Zoomer_QuickProject(new LectinZoomer(), table_name);
+                break;
+            case PEANUT_ZOOMER:
+                precheck = Pattern.matches("peanut_run_.*", table_name.toLowerCase());
+                zoomer_ctroller = new Zoomer_QuickProject(new PeanutZoomer(), table_name);
+                break;
+            case EGG_ZOOMER:
+                precheck = Pattern.matches("egg_run_.*", table_name.toLowerCase());
+                zoomer_ctroller = new Zoomer_QuickProject(new EggZoomer(), table_name);
+                break;
+            default:
+                precheck = false;
+                zoomer_ctroller = null;
+                System.out.println("excel format input is wrong!!");
+                break;
+        }
+        if (zoomer_ctroller == null) {
+            System.out.println("testZoomer type input is wrong!");
+            return null;
+        }
+        if (!precheck) {
+            System.out.println(" table_name input format is wrong! or is not match the test you select !");
+            return null;
+
         }
 
+        zoomer_ctroller.init();
+        zoomer_ctroller.getData();
+        return new Chunk(table_name ,test_name, test_code, loc_sample_map, map_unit);
+
+//            zoomer_ctroller.exportExcel();
+//            OpenLocalFile opener = new OpenLocalFile();
+//            opener.open(path + "\\" + table_name + "_" + test_name + ".xlsx");
     }
 
-    private void exportExcel() throws IOException {
+    private static void exportExcel(List<Chunk> list) throws IOException, Exception {
         Workbook wb = ExcelOperation.getWriteConnection(ExcelOperation.ExcelType.XLSX);
-        Sheet sheet = wb.createSheet(test_name);
+       
+        for (Chunk chunk : list) {
+            
+            String tableName = chunk.tableName;
+            String test_name = chunk.testName;
+//            System.out.println(tableName + ":" +test_name + Arrays.toString(chunk.test_code) );
+            Map<String, Map<String, Float>> map_unit = chunk.map_unit;
+            String[] test_code = chunk.test_code;
+            Map<String, String[]> loc_sample_map = chunk.loc_sample_map;
 
-        HashMap<String, int[]> align_map = new HashMap();
-        for (String location : loc_sample_map.keySet()) {
-            String pillarId = loc_sample_map.get(location)[0];
-            if (!align_map.containsKey(pillarId)) {
-                align_map.put(pillarId, new int[]{(test_code.length + 15) * align_map.size(), 3});
-            }
-        }
+            Sheet sheet = wb.createSheet(test_name + tableName);
+            int row = test_code.length + 30, col = 0;
+            sheet.createRow(row++).createCell(col).setCellValue("CF");
+            sheet.createRow(row++).createCell(col).setCellValue("Pillar_Id");
+            sheet.createRow(row++).createCell(col).setCellValue("Location");
+            sheet.createRow(row++).createCell(col).setCellValue("Julien_Barcode");
 
-        for (String pillarId : align_map.keySet()) {
-            int row = align_map.get(pillarId)[0];
-            int col = align_map.get(pillarId)[1];
-            sheet.createRow(row++).createCell(col - 1).setCellValue(pillarId);
-            sheet.createRow(row++).createCell(col - 1).setCellValue("julienBarcode");
             for (String test : map_unit.keySet()) {
-                sheet.createRow(row++).createCell(col - 1).setCellValue(test);
+                sheet.createRow(row++).createCell(col).setCellValue(test);
             }
-        }
+            col++;
+            for (String location : loc_sample_map.keySet()) {
+                String pillarId = loc_sample_map.get(location)[0];
+                String sample = loc_sample_map.get(location)[1];
 
-        for (String location : loc_sample_map.keySet()) {
-            String pillarId = loc_sample_map.get(location)[0];
-            String sample = loc_sample_map.get(location)[1];
+                int row_index = test_code.length + 30;
+                sheet.getRow(row_index++).createCell(col).setCellValue(1);
+                sheet.getRow(row_index++).createCell(col).setCellValue(pillarId);
+                sheet.getRow(row_index++).createCell(col).setCellValue(location);
+                sheet.getRow(row_index++).createCell(col).setCellValue(sample);
 
-            int row_index = 0, col_index = 0;
-            if (align_map.containsKey(pillarId)) {
-                row_index = align_map.get(pillarId)[0];
-                col_index = align_map.get(pillarId)[1];
-                align_map.get(pillarId)[1]++;
-            } else {
-                row_index = (test_code.length + 15) * align_map.size();
-                col_index = 3;
-                align_map.put(pillarId, new int[]{row_index, col_index + 1});
+                for (String test : map_unit.keySet()) {
+                    float unit = map_unit.get(test).get(location);
+                    Cell cell = sheet.getRow(row_index++).createCell(col);
+                    cell.setCellValue(unit);
+                }
+                col++;
             }
 
-            sheet.getRow(row_index++).createCell(col_index).setCellValue(location);
-            sheet.getRow(row_index++).createCell(col_index).setCellValue(sample);
+            row = 0;
+            col = 0;
+            sheet.createRow(row++).createCell(col).setCellValue("CF");
+            sheet.createRow(row++).createCell(col).setCellValue("Pillar_Id");
+            sheet.createRow(row++).createCell(col).setCellValue("Location");
+            sheet.createRow(row++).createCell(col).setCellValue("Julien_Barcode");
+
             for (String test : map_unit.keySet()) {
-                float unit = map_unit.get(test).get(location);
-                sheet.getRow(row_index++).createCell(col_index).setCellValue(unit);
+                sheet.createRow(row++).createCell(col).setCellValue(test);
             }
+            col++;
+            for (String location : loc_sample_map.keySet()) {
+                String pillarId = loc_sample_map.get(location)[0];
+                String sample = loc_sample_map.get(location)[1];
 
+                int row_index = 0;
+                sheet.getRow(row_index++).createCell(col).setCellValue(1);
+                sheet.getRow(row_index++).createCell(col).setCellValue(pillarId);
+                sheet.getRow(row_index++).createCell(col).setCellValue(location);
+                sheet.getRow(row_index++).createCell(col).setCellValue(sample);
+
+                for (int i = 0; i < test_code.length; i++) {
+                    Cell cell = sheet.getRow(row_index++).createCell(col);
+                    cell.setCellType(CellType.FORMULA);
+                    String rowAxis = ExcelOperation.transferIntgerToString(col + 1);
+                    String formula = rowAxis + "" + (row_index + test_code.length + 30);
+                    String cfCell = rowAxis + "1";
+                    cell.setCellFormula(formula + "/" + cfCell);
+
+                }
+                col++;
+            }
+            
+            //set the condition format
+            String range = "B5:" + ExcelOperation.transferIntgerToString(loc_sample_map.size() + 1) + (4 + test_code.length);
+            System.out.println(range);
+            ExcelOperation.setConditionalFormatting(sheet, IndexedColors.RED, ComparisonOperator.GT, new String[]{"4"}, range);
+            ExcelOperation.setConditionalFormatting(sheet, IndexedColors.YELLOW, ComparisonOperator.BETWEEN, new String[]{"2" , "4"}, range);
+            ExcelOperation.setConditionalFormatting(sheet, IndexedColors.GREEN, ComparisonOperator.LT, new String[]{"2"}, range);
         }
-        ExcelOperation.writeExcel(path + "\\" + table_name + "_" + test_name + ".xlsx", wb);
 
+        wb.setForceFormulaRecalculation(true);
+        
+        String pattern = "yyyyMMddHHmmss";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+        String date = simpleDateFormat.format(new Date());
+        
+        //evaluate format
+        XSSFFormulaEvaluator.evaluateAllFormulaCells(wb);
+        ExcelOperation.writeExcel(path + "\\" + "ZOOMER_" + date + ".xlsx", wb);
+        
     }
 
     private void getData() throws SQLException {
@@ -228,11 +282,11 @@ public class Zoomer_QuickProject {
                     String location = location_type[1];
                     String type = location_type[2];
                     String key = location + "_" + type;
-                    
-                    if(exclude_set.contains(location)){
+
+                    if (exclude_set.contains(location)) {
                         continue;
                     }
-                    
+
                     if (negative_map.containsKey(key)) {
                         negative_map.get(key).add(signal);
                     } else {
@@ -256,11 +310,10 @@ public class Zoomer_QuickProject {
                         float signal = rs.getFloat(j);
                         String[] location_type = rs.getMetaData().getColumnName(j).split("_");
                         String location = location_type[1];
-                        if(exclude_set.contains(location)){
+                        if (exclude_set.contains(location)) {
                             continue;
                         }
-                        
-                        
+
                         int type = location_type[2].equals("igg") ? 0 : 1;
                         map_raw.get(test_code[testId_list.get(type)]).get(location).add(signal);
 
@@ -288,10 +341,10 @@ public class Zoomer_QuickProject {
                 float avg_raw = Math_Tool.avg(list);
                 float avg_neg = Math_Tool.avg(negative_map.get(location + "_" + type));
                 float unit = avg_raw * 3000 / avg_neg;
-                
+
                 //apply equation
                 double[] para = equation_parameter_map.get(test);
-                unit = (float)(unit * para[0] + para[1]);
+                unit = (float) (unit * para[0] + para[1]);
 
                 map_unit.get(test).put(location, unit);
             }
@@ -362,11 +415,11 @@ public class Zoomer_QuickProject {
         while (rs.next()) {
             String sample = rs.getString(2).toLowerCase();
             String location = rs.getString(1);
-            if(sample.matches(".*[a-z].*")){
+            if (sample.matches(".*[a-z].*")) {
                 exclude_set.add(location);
                 continue;
             }
-            
+
             loc_sample_map.put(location, new String[]{rs.getString(3), sample});
         }
         db.close();
