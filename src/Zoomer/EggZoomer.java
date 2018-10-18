@@ -12,7 +12,10 @@ import java.util.HashMap;
  * @author Wei Wang
  */
 public class EggZoomer extends Zoomer {
-
+    private static float qcArr[] = new float[]{2.0f, 4.5f, 1.0f};
+    public static float[] getQcArr(){
+        return qcArr;
+    }
     public EggZoomer() {
         super();
         test_name = "Egg";

@@ -45,12 +45,12 @@ public class DataBaseCon {
 //    }
 //}
 
-class LXDataBaseCon extends DataBaseCon {   
-    private static String name_LX = "jdbc:mysql://192.168.10.153/vibrant_america_information?useSSL=false",user_LX = "wang", pw_LX = "wang";
-    public LXDataBaseCon() throws SQLException{
-        super(name_LX ,user_LX , pw_LX);
-    }
-}
+//class LXDataBaseCon extends DataBaseCon {   
+//    private static String name_LX = "jdbc:mysql://192.168.10.153/vibrant_america_information?useSSL=false",user_LX = "wang", pw_LX = "wang";
+//    public LXDataBaseCon() throws SQLException{
+//        super(name_LX ,user_LX , pw_LX);
+//    }
+//}
 
 class VGDataBaseCon extends DataBaseCon {   
     private static String name_VG = "jdbc:mysql://192.168.10.187/lis_lab_info?useSSL=false",user_VG = "VG", pw_VG = "vibrant@2015";

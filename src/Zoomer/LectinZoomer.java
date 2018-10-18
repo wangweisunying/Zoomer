@@ -12,7 +12,10 @@ import java.util.HashMap;
  * @author Wei Wang
  */
 public class LectinZoomer extends Zoomer {
-
+    private static float qcArr[] = new float[]{2.1f, 3.9f, 1.05f};
+    public static float[] getQcArr(){
+        return qcArr;
+    }
     public LectinZoomer() {
         super();
         test_name = "Lectin";

@@ -12,7 +12,11 @@ import java.util.HashMap;
  * @author Wei Wang
  */
 public class PeanutZoomer extends Zoomer {
-
+    private static float qcArr[] = new float[]{1.9f, 4.5f, 0.9f};
+    
+    public static float[] getQcArr(){
+        return qcArr;
+    }
     public PeanutZoomer() {
         super();
         test_name = "Peanut";

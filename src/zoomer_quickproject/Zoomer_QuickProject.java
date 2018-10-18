@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import model.DataBaseCon;
 import model.ExcelOperation;
+import model.LXDataBaseCon;
 import model.Math_Tool;
 import model.V7DataBaseCon;
 import org.apache.poi.ss.usermodel.Cell;
@@ -179,8 +180,13 @@ public class Zoomer_QuickProject {
             Map<String, Map<String, Float>> map_unit = chunk.map_unit;
             String[] test_code = chunk.test_code;
             Map<String, String[]> loc_sample_map = chunk.loc_sample_map;
-
-            Sheet sheet = wb.createSheet(test_name + tableName);
+            
+            //get the dup data
+            ChunkDupData chunkDup = getDup(loc_sample_map , test_name);
+            
+            
+            
+            Sheet sheet = wb.createSheet(tableName);
             int row = test_code.length + 30, col = 0;
             sheet.createRow(row++).createCell(col).setCellValue("CF");
             sheet.createRow(row++).createCell(col).setCellValue("Pillar_Id");
@@ -190,6 +196,11 @@ public class Zoomer_QuickProject {
             for (String test : map_unit.keySet()) {
                 sheet.createRow(row++).createCell(col).setCellValue(test);
             }
+            
+            
+            
+
+            
             col++;
             for (String location : loc_sample_map.keySet()) {
                 String pillarId = loc_sample_map.get(location)[0];
@@ -208,7 +219,7 @@ public class Zoomer_QuickProject {
                 }
                 col++;
             }
-
+            
             row = 0;
             col = 0;
             sheet.createRow(row++).createCell(col).setCellValue("CF");
@@ -219,6 +230,21 @@ public class Zoomer_QuickProject {
             for (String test : map_unit.keySet()) {
                 sheet.createRow(row++).createCell(col).setCellValue(test);
             }
+            
+            //generate the dup title on row  
+            if(chunkDup != null){
+                String[] dupTestCodeArr = chunkDup.getDupTestCode();
+                row++;
+                for(String dupTestCode : dupTestCodeArr){
+                    sheet.createRow(row++).createCell(col).setCellValue(dupTestCode);
+                }            
+            }
+            
+            
+            
+            
+            
+            
             col++;
             for (String location : loc_sample_map.keySet()) {
                 String pillarId = loc_sample_map.get(location)[0];
@@ -229,7 +255,7 @@ public class Zoomer_QuickProject {
                 sheet.getRow(row_index++).createCell(col).setCellValue(pillarId);
                 sheet.getRow(row_index++).createCell(col).setCellValue(location);
                 sheet.getRow(row_index++).createCell(col).setCellValue(sample);
-
+                         
                 for (int i = 0; i < test_code.length; i++) {
                     Cell cell = sheet.getRow(row_index++).createCell(col);
                     cell.setCellType(CellType.FORMULA);
@@ -239,6 +265,20 @@ public class Zoomer_QuickProject {
                     cell.setCellFormula(formula + "/" + cfCell);
 
                 }
+                
+                if(chunkDup != null){
+                    Map<String , int[]> dupUnitMap = chunkDup.getJulienUnitMap();
+                    row_index++;
+                    int[] dupUnit = dupUnitMap.get(sample);
+                    for(int i = 0 ; i < dupUnit.length ; i++){
+                        sheet.getRow(row_index++).createCell(col).setCellValue(dupUnit[i]);
+                    }
+                }
+            
+                
+                
+                
+                
                 col++;
             }
             
@@ -439,5 +479,91 @@ public class Zoomer_QuickProject {
 //        System.out.println(loc_sample_map);
 
     }
+    
+    private static ChunkDupData getDup(Map<String, String[]> locationMap , String testName) throws SQLException{
+        Map<String , int[]> map = new HashMap();
+        
+        StringBuilder sb = new StringBuilder();
+        for(String location : locationMap.keySet()){
+            sb.append(locationMap.get(location)[1] + ",");
+        }
+        
+        String julienString = sb.substring(0, sb.length() - 1).toString();
+        String sql = "";
+        if(testName.equals("Corn")){
+            sql = "select julien_barcode,corn_igg,corn_iga\n" +
+"from  vibrant_america_information.`sample_data` sd \n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel19` rwp2 on sd.`sample_id` = rwp2.`sample_id`\n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel18` rwp1 ON rwp1.`sample_id` = sd.`sample_id` \n" +
+"where julien_barcode in ("+ julienString +");";
+        }
+        else if(testName.equals("Egg")){
+            sql = "select julien_barcode,egg_white_igg,egg_white_iga,egg_yolk_igg,egg_yolk_iga\n" +
+"from  vibrant_america_information.`sample_data` sd \n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel19` rwp2 on sd.`sample_id` = rwp2.`sample_id`\n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel18` rwp1 ON rwp1.`sample_id` = sd.`sample_id` \n" +
+"where julien_barcode in \n" +
+"("+ julienString +") ;";
+        }
+        else if(testName.equals("Dairy")){
+            sql = "select julien_barcode,BETA_CAS_IGG,BETA_CAS_IGa,CASOMORP_IGG,CASOMORP_IGa,COWS_MILK_IGG,COWS_MILK_IGa,GOATS_MILK_IGG,GOATS_MILK_IGa,WHEY_PROTE_IGG,WHEY_PROTE_IGa \n" +
+"from  vibrant_america_information.`sample_data` sd\n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel16` rwp1 ON rwp1.`sample_id` = sd.`sample_id`\n" +
+"where julien_barcode in ("+ julienString +");";
+        }
+        else if(testName.equals("Peanut")){
+            sql = "select julien_barcode,peanut_igg,peanut_iga\n" +
+"from  vibrant_america_information.`sample_data` sd \n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel19` rwp2 on sd.`sample_id` = rwp2.`sample_id`\n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel18` rwp1 ON rwp1.`sample_id` = sd.`sample_id` \n" +
+"where julien_barcode in ("+ julienString +") ;";
+        }
+        else{
+            return null;
+        } 
+                
+        DataBaseCon db = new LXDataBaseCon();
+        ResultSet rs = db.read(sql);
+        int ct = rs.getMetaData().getColumnCount();
+        
+        String[] dupTestCode = new String[ct - 1];
+        for(int i = 0 ; i < ct - 1 ; i++){
+            dupTestCode[i] = rs.getMetaData().getColumnLabel(i + 2);
+        }
+        
+        while(rs.next()){
+            int[] dupUnitArr = new int[ct - 1];
+            for(int i = 0 ; i < ct - 1 ; i++){
+                dupUnitArr[i] = rs.getObject(i + 2) == null ? - 1 : rs.getInt(i + 2);
+            }          
+            map.put(rs.getString(1), dupUnitArr);
+        }
+        db.close();
+        return new ChunkDupData(map , dupTestCode);
+    }
+    
+    
+    private static class ChunkDupData{
+         private Map<String , int[]> julienUnitMap;
+         private String[] dupTestCode;
+         
+         public ChunkDupData(Map<String , int[]> julienUnitMap, String[] dupTestCode){
+             this.julienUnitMap = julienUnitMap;
+             this.dupTestCode = dupTestCode;
+         }
+         
+         public Map<String , int[]> getJulienUnitMap(){
+             return this.julienUnitMap;
+         }
+         
+         public String[] getDupTestCode(){
+             return this.dupTestCode;
+         }
+         
+         
+    
+    
+    }
+    
 
 }

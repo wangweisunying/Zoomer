@@ -18,7 +18,6 @@ public class Zoomer {
     protected String test_name;
     protected String[] testcode;
     protected Condition[] conditions;
-    
     public Zoomer(){
         equation_parameter_map = new HashMap();
     }
