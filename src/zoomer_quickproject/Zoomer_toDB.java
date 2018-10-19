@@ -33,7 +33,7 @@ public class Zoomer_toDB {
     /**
      * @param args the command line arguments
      */
-    private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut\\ZOOMER_20181016185529.xlsx";
+    private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut\\ZOOMER_20181019141148.xlsx";
 
     public static void main(String[] args) throws IOException, SQLException, Exception {
         RUN(path);
@@ -46,6 +46,9 @@ public class Zoomer_toDB {
 
         for (int i = 0; i < ct; i++) {
             Sheet sheet = wb.getSheetAt(i);
+            if(wb.getSheetName(i).equals("ref_sheet")){
+                continue;
+            }
 
             List<Zoomer_Unit> list = new ArrayList();
             int rowct = 4, colct = 1;
@@ -114,7 +117,9 @@ public class Zoomer_toDB {
                 db.write(sqlUpdate);
                 System.out.println(sqlUpdate);
                 sqlUpdate = "INSERT INTO `tsp_test_qc_data`.`test_qc_data` (`test_name`, `pillar_plate_id`, `cal_1`, `pos_ctrl_1`, `neg_ctrl_1`,`time`) VALUES ('" + testName
-                        + "', '" + pillarId + "', '" + arr[0] + "', '" + arr[1] + "', '" + arr[2] + "',now());";
+                        + "_qc', '" + pillarId + "', '" + arr[0] + "', '" + arr[1] + "', '" + arr[2] + "',now());";
+                
+                db.write(sqlUpdate);
                 System.out.println(sqlUpdate);
             }
 

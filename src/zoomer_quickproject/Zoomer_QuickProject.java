@@ -39,6 +39,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.ComparisonOperator;
 import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
@@ -196,11 +197,7 @@ public class Zoomer_QuickProject {
             for (String test : map_unit.keySet()) {
                 sheet.createRow(row++).createCell(col).setCellValue(test);
             }
-            
-            
-            
 
-            
             col++;
             for (String location : loc_sample_map.keySet()) {
                 String pillarId = loc_sample_map.get(location)[0];
@@ -230,19 +227,15 @@ public class Zoomer_QuickProject {
             for (String test : map_unit.keySet()) {
                 sheet.createRow(row++).createCell(col).setCellValue(test);
             }
-            
+            row++;
+            sheet.createRow(row++).createCell(col).setCellValue("Pos Count");
             //generate the dup title on row  
             if(chunkDup != null){
                 String[] dupTestCodeArr = chunkDup.getDupTestCode();
-                row++;
                 for(String dupTestCode : dupTestCodeArr){
                     sheet.createRow(row++).createCell(col).setCellValue(dupTestCode);
                 }            
             }
-            
-            
-            
-            
             
             
             col++;
@@ -251,7 +244,7 @@ public class Zoomer_QuickProject {
                 String sample = loc_sample_map.get(location)[1];
 
                 int row_index = 0;
-                sheet.getRow(row_index++).createCell(col).setCellValue(1);
+                sheet.getRow(row_index++).createCell(col).setCellValue(4); // cf value
                 sheet.getRow(row_index++).createCell(col).setCellValue(pillarId);
                 sheet.getRow(row_index++).createCell(col).setCellValue(location);
                 sheet.getRow(row_index++).createCell(col).setCellValue(sample);
@@ -259,16 +252,25 @@ public class Zoomer_QuickProject {
                 for (int i = 0; i < test_code.length; i++) {
                     Cell cell = sheet.getRow(row_index++).createCell(col);
                     cell.setCellType(CellType.FORMULA);
-                    String rowAxis = ExcelOperation.transferIntgerToString(col + 1);
-                    String formula = rowAxis + "" + (row_index + test_code.length + 30);
-                    String cfCell = rowAxis + "1";
+                    String colName = ExcelOperation.transferIntgerToString(col + 1);
+                    String formula = colName + "" + (row_index + test_code.length + 30);
+                    String cfCell = colName + "1";
                     cell.setCellFormula(formula + "/" + cfCell);
 
                 }
                 
+                row_index++;
+                
+                //generate the ct
+                Cell cell = sheet.getRow(row_index++).createCell(col);
+                String colName = ExcelOperation.transferIntgerToString(col + 1);
+                String formula = colName + "5:"+ colName + (test_code.length + 4) ;
+                cell.setCellFormula("COUNTIF("+ formula +",\">2\")");
+                
+                
                 if(chunkDup != null){
                     Map<String , int[]> dupUnitMap = chunkDup.getJulienUnitMap();
-                    row_index++;
+                    
                     int[] dupUnit = dupUnitMap.get(sample);
                     for(int i = 0 ; i < dupUnit.length ; i++){
                         sheet.getRow(row_index++).createCell(col).setCellValue(dupUnit[i]);
@@ -289,6 +291,65 @@ public class Zoomer_QuickProject {
             ExcelOperation.setConditionalFormatting(sheet, IndexedColors.YELLOW, ComparisonOperator.BETWEEN, new String[]{"2" , "4"}, range);
             ExcelOperation.setConditionalFormatting(sheet, IndexedColors.GREEN, ComparisonOperator.LT, new String[]{"2"}, range);
         }
+        
+        //reference sheet generation
+        Sheet refSheet = wb.createSheet("ref_sheet");
+        
+        
+        int ref_row = 0;
+        for(int i = 0 ; i < wb.getNumberOfSheets() ; i++ ){
+            String sheetName = wb.getSheetName(i);
+            Sheet curSheet = wb.getSheetAt(i);
+
+            int len = 0;
+            if(sheetName.startsWith("corn")){
+                len = CornZoomer.getTestCodeCount();
+            }
+            else if(sheetName.startsWith("dairy")){
+                len = DairyZoomer.getTestCodeCount();
+            }
+            else if(sheetName.startsWith("egg")){
+                len = EggZoomer.getTestCodeCount();
+            }
+            else if(sheetName.startsWith("lectin")){
+                len = LectinZoomer.getTestCodeCount();
+            }
+            else if(sheetName.startsWith("peanut")){
+                len = PeanutZoomer.getTestCodeCount();
+            }
+            else{
+                continue;
+            }
+            
+            
+            int refCol = 0 , col = 0; 
+            while(curSheet.getRow(3).getCell(col + 1) != null){
+                Row refRow = refSheet.createRow(ref_row++);
+                col++;
+                String colLabel = ExcelOperation.transferIntgerToString(col + 1);
+                refRow.createCell(refCol++).setCellFormula(sheetName + "!" + colLabel + "4");
+                refRow.createCell(refCol++).setCellValue(sheetName);
+
+                int startRow = len + 6;
+                while(curSheet.getRow(startRow - 1) != null){
+//                    System.out.println(colLabel + startRow);
+                    refRow.createCell(refCol++).setCellFormula(sheetName + "!" + colLabel + startRow++);
+                }
+                refCol = 0;
+                
+            }
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
         wb.setForceFormulaRecalculation(true);
         
@@ -385,7 +446,11 @@ public class Zoomer_QuickProject {
                 //apply equation
                 double[] para = equation_parameter_map.get(test);
                 unit = (float) (unit * para[0] + para[1]);
-
+                
+                if(unit < 0){
+                    unit = (float)(Math.abs(unit) - Math.floor(Math.abs(unit)));   
+                }
+                
                 map_unit.get(test).put(location, unit);
             }
         }
@@ -534,7 +599,7 @@ public class Zoomer_QuickProject {
         while(rs.next()){
             int[] dupUnitArr = new int[ct - 1];
             for(int i = 0 ; i < ct - 1 ; i++){
-                dupUnitArr[i] = rs.getObject(i + 2) == null ? - 1 : rs.getInt(i + 2);
+                dupUnitArr[i] = rs.getObject(i + 2) == null ? - 2 : rs.getInt(i + 2);
             }          
             map.put(rs.getString(1), dupUnitArr);
         }

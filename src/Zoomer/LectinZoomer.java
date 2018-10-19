@@ -13,6 +13,10 @@ import java.util.HashMap;
  */
 public class LectinZoomer extends Zoomer {
     private static float qcArr[] = new float[]{2.1f, 3.9f, 1.05f};
+    private static int testCodeCt = 46;
+    public static int getTestCodeCount(){
+        return testCodeCt;
+    }
     public static float[] getQcArr(){
         return qcArr;
     }

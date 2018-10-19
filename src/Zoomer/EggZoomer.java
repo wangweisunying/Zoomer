@@ -13,6 +13,10 @@ import java.util.HashMap;
  */
 public class EggZoomer extends Zoomer {
     private static float qcArr[] = new float[]{2.0f, 4.5f, 1.0f};
+    private static int testCodeCt = 22;
+    public static int getTestCodeCount(){
+        return testCodeCt;
+    }
     public static float[] getQcArr(){
         return qcArr;
     }
