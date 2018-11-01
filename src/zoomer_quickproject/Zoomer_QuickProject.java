@@ -189,7 +189,8 @@ public class Zoomer_QuickProject {
             
             Sheet sheet = wb.createSheet(tableName);
             int row = test_code.length + 30, col = 0;
-            sheet.createRow(row++).createCell(col).setCellValue("CF");
+            sheet.createRow(row++).createCell(col).setCellValue("CFG");
+            sheet.createRow(row++).createCell(col).setCellValue("CFA");
             sheet.createRow(row++).createCell(col).setCellValue("Pillar_Id");
             sheet.createRow(row++).createCell(col).setCellValue("Location");
             sheet.createRow(row++).createCell(col).setCellValue("Julien_Barcode");
@@ -204,7 +205,9 @@ public class Zoomer_QuickProject {
                 String sample = loc_sample_map.get(location)[1];
 
                 int row_index = test_code.length + 30;
-                sheet.getRow(row_index++).createCell(col).setCellValue(1);
+                sheet.getRow(row_index++).createCell(col).setCellValue(4);
+                sheet.getRow(row_index++).createCell(col).setCellValue(4);
+                
                 sheet.getRow(row_index++).createCell(col).setCellValue(pillarId);
                 sheet.getRow(row_index++).createCell(col).setCellValue(location);
                 sheet.getRow(row_index++).createCell(col).setCellValue(sample);
@@ -219,7 +222,8 @@ public class Zoomer_QuickProject {
             
             row = 0;
             col = 0;
-            sheet.createRow(row++).createCell(col).setCellValue("CF");
+            sheet.createRow(row++).createCell(col).setCellValue("CFG");
+            sheet.createRow(row++).createCell(col).setCellValue("CFA");
             sheet.createRow(row++).createCell(col).setCellValue("Pillar_Id");
             sheet.createRow(row++).createCell(col).setCellValue("Location");
             sheet.createRow(row++).createCell(col).setCellValue("Julien_Barcode");
@@ -245,6 +249,8 @@ public class Zoomer_QuickProject {
 
                 int row_index = 0;
                 sheet.getRow(row_index++).createCell(col).setCellValue(4); // cf value
+                sheet.getRow(row_index++).createCell(col).setCellValue(4); // cf value
+
                 sheet.getRow(row_index++).createCell(col).setCellValue(pillarId);
                 sheet.getRow(row_index++).createCell(col).setCellValue(location);
                 sheet.getRow(row_index++).createCell(col).setCellValue(sample);
@@ -253,8 +259,11 @@ public class Zoomer_QuickProject {
                     Cell cell = sheet.getRow(row_index++).createCell(col);
                     cell.setCellType(CellType.FORMULA);
                     String colName = ExcelOperation.transferIntgerToString(col + 1);
-                    String formula = colName + "" + (row_index + test_code.length + 30);
-                    String cfCell = colName + "1";
+                    int cfRow = (row_index + test_code.length + 30);
+                    String formula = colName + "" + cfRow;
+                    String cfCellG = colName + "1";
+                    String cfCellA = colName + "2";
+                    String cfCell = ( i >= test_code.length / 2 ) ? cfCellA : cfCellG;
                     cell.setCellFormula(formula + "/" + cfCell);
 
                 }
@@ -264,7 +273,7 @@ public class Zoomer_QuickProject {
                 //generate the ct
                 Cell cell = sheet.getRow(row_index++).createCell(col);
                 String colName = ExcelOperation.transferIntgerToString(col + 1);
-                String formula = colName + "5:"+ colName + (test_code.length + 4) ;
+                String formula = colName + "6:"+ colName + (test_code.length + 5) ;
                 cell.setCellFormula("COUNTIF("+ formula +",\">2\")");
                 
                 
@@ -285,7 +294,7 @@ public class Zoomer_QuickProject {
             }
             
             //set the condition format
-            String range = "B5:" + ExcelOperation.transferIntgerToString(loc_sample_map.size() + 1) + (4 + test_code.length);
+            String range = "B6:" + ExcelOperation.transferIntgerToString(loc_sample_map.size() + 1) + (5 + test_code.length);
             System.out.println(range);
             ExcelOperation.setConditionalFormatting(sheet, IndexedColors.RED, ComparisonOperator.GT, new String[]{"4"}, range);
             ExcelOperation.setConditionalFormatting(sheet, IndexedColors.YELLOW, ComparisonOperator.BETWEEN, new String[]{"2" , "4"}, range);
@@ -327,10 +336,10 @@ public class Zoomer_QuickProject {
                 Row refRow = refSheet.createRow(ref_row++);
                 col++;
                 String colLabel = ExcelOperation.transferIntgerToString(col + 1);
-                refRow.createCell(refCol++).setCellFormula(sheetName + "!" + colLabel + "4");
+                refRow.createCell(refCol++).setCellFormula(sheetName + "!" + colLabel + "5");
                 refRow.createCell(refCol++).setCellValue(sheetName);
 
-                int startRow = len + 6;
+                int startRow = len + 7;
                 while(curSheet.getRow(startRow - 1) != null){
 //                    System.out.println(colLabel + startRow);
                     refRow.createCell(refCol++).setCellFormula(sheetName + "!" + colLabel + startRow++);

@@ -51,7 +51,7 @@ public class Zoomer_toDB {
             }
 
             List<Zoomer_Unit> list = new ArrayList();
-            int rowct = 4, colct = 1;
+            int rowct = 5, colct = 1;
             //insert into `tsp_test_unit_data`.`zoomers_unit_data` values ('CORN_ALBUMIN_IGG','1809190213','0.964987944825308','TST2847T22847N11','D','1',0,now());
             Row pillar_row = sheet.getRow(1);
             Row location_row = sheet.getRow(2);

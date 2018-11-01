@@ -12,14 +12,16 @@ import java.util.regex.Pattern;
  *
  * @author Wei Wang
  */
+
+
 public class Math_Tool {
 
-//    public static void main(String[] args) {
-//        
-//
-//        System.out.println("184574".matches((".*[a-z].*")));
-//
-//    }
+    public static void main(String[] args) {
+        
+
+        System.out.println(greatCommonDiviser(3,0));
+//    System.out.println(-2 % 9);
+    }
     
     public static float avg(List<Float> list){
         if(list == null || list.size() == 0){
@@ -46,6 +48,12 @@ public class Math_Tool {
         }
 
     }
+    
+    public static int greatCommonDiviser(int x , int y){
+        //辗转相除法
+        return x == 0 ? y : greatCommonDiviser(y % x , x);
+    }
+    
 
     private static float partition(List<Float> list, int s, int e, int k) {
         if (s >= e) {
@@ -78,4 +86,7 @@ public class Math_Tool {
         }
         return list.get(k);
     }
+    
+    
+   
 }
