@@ -9,7 +9,9 @@ import Zoomer.CornZoomer;
 import Zoomer.DairyZoomer;
 import Zoomer.EggZoomer;
 import Zoomer.LectinZoomer;
+import Zoomer.NutZoomer;
 import Zoomer.PeanutZoomer;
+import Zoomer.SoyZoomer;
 import Zoomer.Zoomer_Unit;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -33,7 +35,7 @@ public class Zoomer_toDB {
     /**
      * @param args the command line arguments
      */
-    private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut\\ZOOMER_20181019141148.xlsx";
+    private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut\\ZOOMER_20181130165512.xlsx";
 
     public static void main(String[] args) throws IOException, SQLException, Exception {
         RUN(path);
@@ -53,14 +55,15 @@ public class Zoomer_toDB {
             List<Zoomer_Unit> list = new ArrayList();
             int rowct = 5, colct = 1;
             //insert into `tsp_test_unit_data`.`zoomers_unit_data` values ('CORN_ALBUMIN_IGG','1809190213','0.964987944825308','TST2847T22847N11','D','1',0,now());
-            Row pillar_row = sheet.getRow(1);
-            Row location_row = sheet.getRow(2);
-            Row juilen_row = sheet.getRow(3);
+            Row pillar_row = sheet.getRow(2);
+            Row location_row = sheet.getRow(3);
+            Row juilen_row = sheet.getRow(4);
             while (sheet.getRow(rowct) != null) {
                 Row row = sheet.getRow(rowct);
                 String test = row.getCell(0).getStringCellValue();
                 while (row.getCell(colct) != null) {
                     String location = location_row.getCell(colct).getStringCellValue();
+                    pillar_row.getCell(colct).getStringCellValue();
                     list.add(new Zoomer_Unit(sheet.getSheetName().split("_")[0], test, juilen_row.getCell(colct).getStringCellValue(), row.getCell(colct).getNumericCellValue(), pillar_row.getCell(colct).getStringCellValue(),
                             location.substring(0, 1), location.substring(1)));
 //                    System.out.println(rowct + " : " + colct + "  " + row.getCell(colct).getNumericCellValue());
@@ -106,6 +109,12 @@ public class Zoomer_toDB {
             }
             if (testName.equals("dairy")) {
                 arr = DairyZoomer.getQcArr();
+            }
+            if (testName.equals("nut")) {
+                arr = NutZoomer.getQcArr();
+            }
+            if (testName.equals("soy")) {
+                arr = SoyZoomer.getQcArr();
             }
             if (arr.length != 3) {
                 throw new Exception("this Qc arr is not valid!");

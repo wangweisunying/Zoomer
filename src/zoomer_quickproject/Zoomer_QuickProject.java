@@ -10,10 +10,10 @@ import Zoomer.CornZoomer;
 import Zoomer.DairyZoomer;
 import Zoomer.EggZoomer;
 import Zoomer.LectinZoomer;
+import Zoomer.NutZoomer;
 import Zoomer.PeanutZoomer;
+import Zoomer.SoyZoomer;
 import Zoomer.Zoomer;
-import java.awt.Desktop;
-import java.io.File;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -27,8 +27,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import model.DataBaseCon;
 import model.ExcelOperation;
@@ -56,10 +54,10 @@ public class Zoomer_QuickProject {
     private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut";
 
     public static void main(String[] args) throws SQLException, IOException, Exception {
-//        ZOOMER_TEST[] test = {ZOOMER_TEST.DAIRY_ZOOMER};
-//        String[] table = {"dairy_run_23"};
-        ZOOMER_TEST[] test = {ZOOMER_TEST.CORN_ZOOMER, ZOOMER_TEST.DAIRY_ZOOMER, ZOOMER_TEST.EGG_ZOOMER, ZOOMER_TEST.LECTIN_ZOOMER, ZOOMER_TEST.PEANUT_ZOOMER};
-        String[] table = {"corn_run_23", "dairy_run_23", "egg_run_23", "lectin_run_23", "peanut_run_23"};
+//        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER ,ZOOMER_TEST.NUT_ZOOMER };
+//        String[] table = {"soy_run_30" , "seanut1"};
+        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER ,ZOOMER_TEST.NUT_ZOOMER,ZOOMER_TEST.CORN_ZOOMER, ZOOMER_TEST.DAIRY_ZOOMER, ZOOMER_TEST.EGG_ZOOMER, ZOOMER_TEST.LECTIN_ZOOMER, ZOOMER_TEST.PEANUT_ZOOMER};
+        String[] table = {"soy_run_30" , "nut_run_1","corn_run_23", "dairy_run_23", "egg_run_23", "lectin_run_23", "peanut_run_23"};
 
 //      
         List<Chunk> list = new ArrayList();
@@ -91,7 +89,9 @@ public class Zoomer_QuickProject {
         DAIRY_ZOOMER,
         LECTIN_ZOOMER,
         PEANUT_ZOOMER,
-        EGG_ZOOMER
+        EGG_ZOOMER,
+        NUT_ZOOMER,
+        SOY_ZOOMER
     }
 
     private static Map<String, Map<String, Float>> map_unit;
@@ -145,6 +145,14 @@ public class Zoomer_QuickProject {
                 precheck = Pattern.matches("egg_run_.*", table_name.toLowerCase());
                 zoomer_ctroller = new Zoomer_QuickProject(new EggZoomer(), table_name);
                 break;
+            case NUT_ZOOMER:
+                precheck = Pattern.matches("nut_run_.*", table_name.toLowerCase());
+                zoomer_ctroller = new Zoomer_QuickProject(new NutZoomer(), table_name);
+                break;
+            case SOY_ZOOMER:
+                precheck = Pattern.matches("soy_run_.*", table_name.toLowerCase());
+                zoomer_ctroller = new Zoomer_QuickProject(new SoyZoomer(), table_name);
+                break;  
             default:
                 precheck = false;
                 zoomer_ctroller = null;
@@ -281,9 +289,12 @@ public class Zoomer_QuickProject {
                     Map<String , int[]> dupUnitMap = chunkDup.getJulienUnitMap();
                     
                     int[] dupUnit = dupUnitMap.get(sample);
-                    for(int i = 0 ; i < dupUnit.length ; i++){
-                        sheet.getRow(row_index++).createCell(col).setCellValue(dupUnit[i]);
+                    if(dupUnit!= null){
+                        for(int i = 0 ; i < dupUnit.length ; i++){
+                            sheet.getRow(row_index++).createCell(col).setCellValue(dupUnit[i]);
+                        }
                     }
+                    
                 }
             
                 
@@ -325,6 +336,12 @@ public class Zoomer_QuickProject {
             }
             else if(sheetName.startsWith("peanut")){
                 len = PeanutZoomer.getTestCodeCount();
+            }
+            else if(sheetName.startsWith("nut")){
+                len = NutZoomer.getTestCodeCount();
+            }
+            else if(sheetName.startsWith("soy")){
+                len = SoyZoomer.getTestCodeCount();
             }
             else{
                 continue;
@@ -412,11 +429,13 @@ public class Zoomer_QuickProject {
                 String[] info_id_cur = conditions[i].getInfoId().split("%");
                 String[] seq_cur = conditions[i].getSeq().split("%");
                 if (judge(class_cur, protein_cur, info_id_cur, seq_cur, class_name, protein_name, info_id, seq)) {
+                    
                     List<Integer> testId_list = new ArrayList();
                     testId_list.add(i);//igg
                     testId_list.add(i + conditions.length); //iga
                     int col_ct = rs.getMetaData().getColumnCount();
                     for (int j = 14; j <= col_ct; j++) {
+                        
                         float signal = rs.getFloat(j);
                         String[] location_type = rs.getMetaData().getColumnName(j).split("_");
                         String location = location_type[1];
@@ -426,14 +445,17 @@ public class Zoomer_QuickProject {
 
                         int type = location_type[2].equals("igg") ? 0 : 1;
                         map_raw.get(test_code[testId_list.get(type)]).get(location).add(signal);
-
                     }
-
                 }
-
             }
-
         }
+        
+//        for(String str : map_raw.keySet()){
+//            for(String location : map_raw.get(str).keySet()){
+//                System.out.println(str + "   " + location + "  " + map_raw.get(str).get(location));
+//            }
+//        
+//        }
 
 //        System.out.println(map_raw.get("CORN_ALBUMIN_IGG").get("f3").size());
 //        for(float x : map_raw.get("CORN_ALBUMIN_IGG").get("f3")){
@@ -450,6 +472,13 @@ public class Zoomer_QuickProject {
                 String type = test.substring(test.lastIndexOf("_") + 1).toLowerCase();
                 float avg_raw = Math_Tool.avg(list);
                 float avg_neg = Math_Tool.avg(negative_map.get(location + "_" + type));
+                
+                if(type.equals("igg")){
+                    avg_neg = avg_neg >= 1200 ? avg_neg : 1200;
+                }
+                else{
+                    avg_neg = avg_neg >= 500 ? avg_neg : 500;
+                }
                 float unit = avg_raw * 3000 / avg_neg;
 
                 //apply equation
@@ -466,7 +495,7 @@ public class Zoomer_QuickProject {
     }
 
     private boolean judge(String[] class_cur, String[] protein_cur, String[] info_id_cur, String[] seq_cur,
-            String class_name, String protein_name, String info_id, String seq) {
+        String class_name, String protein_name, String info_id, String seq) {
         boolean res_class = false;
         for (String tmp_class : class_cur) {
             if (tmp_class.length() == 0) {
@@ -521,7 +550,7 @@ public class Zoomer_QuickProject {
                 + "    WHERE\n"
                 + "        TABLE_SCHEMA = 'combine_tables'\n"
                 + "            AND TABLE_NAME = '" + table_name + "'\n"
-                + "            AND length(COLUMN_NAME) > 16) as a join vibrant_test_tracking.pillar_plate_info as b on \n"
+                + "            AND length(COLUMN_NAME) > 13) as a join vibrant_test_tracking.pillar_plate_info as b on \n"
                 + "            a.pillarId = b.pillar_plate_id) as d join vibrant_test_tracking.well_info as e \n"
                 + "            on d.well_plate_id = e.well_plate_id and d.location = concat(e.well_row , e.well_col);";
         System.out.println(sql);
@@ -557,6 +586,7 @@ public class Zoomer_QuickProject {
     private static ChunkDupData getDup(Map<String, String[]> locationMap , String testName) throws SQLException{
         Map<String , int[]> map = new HashMap();
         
+        if(locationMap.isEmpty()) return new ChunkDupData(new HashMap() , new String[1]);
         StringBuilder sb = new StringBuilder();
         for(String location : locationMap.keySet()){
             sb.append(locationMap.get(location)[1] + ",");
@@ -592,10 +622,28 @@ public class Zoomer_QuickProject {
 "left join `vibrant_america_test_result`.`result_wellness_panel18` rwp1 ON rwp1.`sample_id` = sd.`sample_id` \n" +
 "where julien_barcode in ("+ julienString +") ;";
         }
+        else if(testName.equals("Nut")){
+            sql = "select julien_barcode,almond_igg,almond_iga,cashews_igg,cashews_iga,english_walnu_igg,english_walnu_iga,avocado_igg,avocado_iga\n" +
+"from  vibrant_america_information.`sample_data` sd \n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel19` rwp2 on sd.`sample_id` = rwp2.`sample_id`\n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel18` rwp1 ON rwp1.`sample_id` = sd.`sample_id` \n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel20` rwp3 ON rwp3.`sample_id` = sd.`sample_id` \n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel17` rwp4 ON rwp4.`sample_id` = sd.`sample_id` \n" +
+"where julien_barcode in ("+ julienString +") ;";
+        }
+        else if(testName.equals("Soy")){
+            sql = "select julien_barcode,soybean_igg,soybean_iga\n" +
+"from  vibrant_america_information.`sample_data` sd \n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel19` rwp2 on sd.`sample_id` = rwp2.`sample_id`\n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel18` rwp1 ON rwp1.`sample_id` = sd.`sample_id` \n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel20` rwp3 ON rwp3.`sample_id` = sd.`sample_id` \n" +
+"left join `vibrant_america_test_result`.`result_wellness_panel17` rwp4 ON rwp4.`sample_id` = sd.`sample_id` \n" +
+"where julien_barcode in ("+ julienString +") ;";
+        }
         else{
             return null;
         } 
-                
+        System.out.println(sql);        
         DataBaseCon db = new LXDataBaseCon();
         ResultSet rs = db.read(sql);
         int ct = rs.getMetaData().getColumnCount();

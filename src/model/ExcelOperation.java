@@ -82,8 +82,14 @@ public class ExcelOperation {
         // write from bottom 
         String res = "";
         while( n > 26){
-            res = (char)(n % 26 + 64) + res;
-            n = n / 26;
+            if(n % 26 == 0){
+                res = 'Z' + res;
+                n = n / 26 - 1;
+            }
+            else{
+                res = (char)(n % 26 + 64) + res;
+                n = n / 26;
+            }
         }
         res = (char)(n + 64) + res;
         return res;
