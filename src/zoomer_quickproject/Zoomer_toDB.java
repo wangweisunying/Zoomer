@@ -35,7 +35,7 @@ public class Zoomer_toDB {
     /**
      * @param args the command line arguments
      */
-    private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut\\ZOOMER_20181130165512.xlsx";
+    private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut\\ZOOMER_20181203150900.xlsx";
 
     public static void main(String[] args) throws IOException, SQLException, Exception {
         RUN(path);

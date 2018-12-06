@@ -56,8 +56,8 @@ public class Zoomer_QuickProject {
     public static void main(String[] args) throws SQLException, IOException, Exception {
 //        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER ,ZOOMER_TEST.NUT_ZOOMER };
 //        String[] table = {"soy_run_30" , "seanut1"};
-        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER ,ZOOMER_TEST.NUT_ZOOMER,ZOOMER_TEST.CORN_ZOOMER, ZOOMER_TEST.DAIRY_ZOOMER, ZOOMER_TEST.EGG_ZOOMER, ZOOMER_TEST.LECTIN_ZOOMER, ZOOMER_TEST.PEANUT_ZOOMER};
-        String[] table = {"soy_run_30" , "nut_run_1","corn_run_23", "dairy_run_23", "egg_run_23", "lectin_run_23", "peanut_run_23"};
+        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER ,ZOOMER_TEST.LECTIN_ZOOMER};
+        String[] table = {"lectin_run_40" ,"lectin_run_40" };
 
 //      
         List<Chunk> list = new ArrayList();
@@ -150,7 +150,7 @@ public class Zoomer_QuickProject {
                 zoomer_ctroller = new Zoomer_QuickProject(new NutZoomer(), table_name);
                 break;
             case SOY_ZOOMER:
-                precheck = Pattern.matches("soy_run_.*", table_name.toLowerCase());
+                precheck = Pattern.matches("lectin_run_.*", table_name.toLowerCase());
                 zoomer_ctroller = new Zoomer_QuickProject(new SoyZoomer(), table_name);
                 break;  
             default:
@@ -195,7 +195,7 @@ public class Zoomer_QuickProject {
             
             
             
-            Sheet sheet = wb.createSheet(tableName);
+            Sheet sheet = wb.createSheet(tableName+ "_" + Math.random());
             int row = test_code.length + 30, col = 0;
             sheet.createRow(row++).createCell(col).setCellValue("CFG");
             sheet.createRow(row++).createCell(col).setCellValue("CFA");
