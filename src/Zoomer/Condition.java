@@ -30,4 +30,7 @@ public class Condition {
     public String getSeq(){
         return seq;
     }
+    public String getGene(){
+        return "";
+    }
 }

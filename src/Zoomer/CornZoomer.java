@@ -97,7 +97,6 @@ public class CornZoomer extends Zoomer {
         for (int i = 0; i < testcode.length; i++) {
             equation_parameter_map.put(testcode[i], equation_parameter[i]);
         }
-
     }
 
 }

@@ -56,8 +56,8 @@ public class Zoomer_QuickProject {
     public static void main(String[] args) throws SQLException, IOException, Exception {
 //        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER ,ZOOMER_TEST.NUT_ZOOMER };
 //        String[] table = {"soy_run_30" , "seanut1"};
-        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER ,ZOOMER_TEST.LECTIN_ZOOMER};
-        String[] table = {"lectin_run_40" ,"lectin_run_40" };
+        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER ,ZOOMER_TEST.LECTIN_ZOOMER , ZOOMER_TEST.DAIRY_ZOOMER};
+        String[] table = {"lectin_run_40" ,"lectin_run_40" , "dairy_run_40" };
 
 //      
         List<Chunk> list = new ArrayList();
@@ -195,7 +195,7 @@ public class Zoomer_QuickProject {
             
             
             
-            Sheet sheet = wb.createSheet(tableName+ "_" + Math.random());
+            Sheet sheet = wb.createSheet(tableName+ "_" + test_name);
             int row = test_code.length + 30, col = 0;
             sheet.createRow(row++).createCell(col).setCellValue("CFG");
             sheet.createRow(row++).createCell(col).setCellValue("CFA");
@@ -331,7 +331,7 @@ public class Zoomer_QuickProject {
             else if(sheetName.startsWith("egg")){
                 len = EggZoomer.getTestCodeCount();
             }
-            else if(sheetName.startsWith("lectin")){
+            else if(sheetName.startsWith("lectin") && sheetName.endsWith("Lectin") ){
                 len = LectinZoomer.getTestCodeCount();
             }
             else if(sheetName.startsWith("peanut")){
@@ -340,7 +340,7 @@ public class Zoomer_QuickProject {
             else if(sheetName.startsWith("nut")){
                 len = NutZoomer.getTestCodeCount();
             }
-            else if(sheetName.startsWith("soy")){
+            else if(sheetName.startsWith("lectin") && sheetName.endsWith("Soy")){
                 len = SoyZoomer.getTestCodeCount();
             }
             else{
