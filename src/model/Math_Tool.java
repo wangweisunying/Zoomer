@@ -5,6 +5,9 @@
  */
 package model;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -88,5 +91,29 @@ public class Math_Tool {
     }
     
     
-   
+       public static double getPercentile(double[] data, double p) {
+        int n = data.length;
+        Arrays.sort(data);
+        double px = p * (n - 1);
+        int i = (int) java.lang.Math.floor(px);
+        double g = px - i;
+        if (g == 0) {
+            return data[i];
+        } else {
+            return (1 - g) * data[i] + g * data[i + 1];
+        }
+    }
+
+    public static double getPercentile(ArrayList<Double> list, double p) {
+        int n = list.size();
+        Collections.sort(list);
+        double px = p * (n - 1);
+        int i = (int) java.lang.Math.floor(px);
+        double g = px - i;
+        if (g == 0) {
+            return list.get(i);
+        } else {
+            return (1 - g) * list.get(i) + g * list.get(i + 1);
+        }
+    }
 }

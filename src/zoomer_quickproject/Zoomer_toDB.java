@@ -9,6 +9,7 @@ import Zoomer.CornZoomer;
 import Zoomer.DairyZoomer;
 import Zoomer.EggZoomer;
 import Zoomer.LectinZoomer;
+import Zoomer.NeuralZoomer;
 import Zoomer.NutZoomer;
 import Zoomer.PeanutZoomer;
 import Zoomer.SoyZoomer;
@@ -35,7 +36,7 @@ public class Zoomer_toDB {
     /**
      * @param args the command line arguments
      */
-    private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut\\ZOOMER_20181203150900.xlsx";
+    private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut\\ZOOMER_20181219114438.xlsx";
 
     public static void main(String[] args) throws IOException, SQLException, Exception {
         RUN(path);
@@ -115,6 +116,9 @@ public class Zoomer_toDB {
             }
             if (testName.equals("soy")) {
                 arr = SoyZoomer.getQcArr();
+            }
+            if (testName.equals("neural")) {
+                arr = NeuralZoomer.getQcArr();
             }
             if (arr.length != 3) {
                 throw new Exception("this Qc arr is not valid!");

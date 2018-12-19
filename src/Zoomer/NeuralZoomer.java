@@ -5,6 +5,21 @@
  */
 package Zoomer;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import model.DataBaseCon;
+import model.LXDataBaseCon;
+import model.Math_Tool;
+import model.StringOperation;
+
 /**
  *
  * @author Wei Wang
@@ -234,6 +249,8 @@ public class NeuralZoomer extends Zoomer {
                                                     {0.9,0.95},
                                                     {0.9,0.95},
                                                     {0.9,0.95}};
+    
+   
 
     public static int[][] getTestAgeRange() {
         return testAgeRange;
@@ -423,55 +440,299 @@ public class NeuralZoomer extends Zoomer {
         conditions[52] = new NeuralCondition("" , "" , "" , ".*MDRPR.*%.*DRPRT.*%.*RPRTP.*%.*PRTPP.*%.*RTPPP.*%.*TPPPS.*%.*PPPSY.*%.*PPSYS.*%.*PSYSE.*%.*SYSE.*%.*YSE.*", "");
         conditions[53] = new NeuralCondition("" , "" , "" , ".*HPWT.*%.*PWTE.*%.*PWTET.*%.*TETT.*%.*TETTI.*%.*ETTIE.*%.*TTIEP.*%.*TIEPW.*%.*IEPWR.*%.*EPWRD.*%.*PWRDI.*%.*WRDID.*", "");
         conditions[54] = new NeuralCondition("" , "" , "" , ".*ASVKV.*%.*SVKVL.*%.*VKVLL.*%.*KVLLG.*%.*VLLGR.*%.*LLGRK.*%.*LGRKS.*%.*GRKSD.*%.*RKSDS.*%.*KSDSE.*%.*SDSER.*%.*DSERG.*", "");
-        
-        
-        
-        double[][] equation_parameter = new double[][]{{0.0153837444252046, -42.6088409842669},
-        {0.0254571355751231, -72.9300022476002},
-        {0.0383951832084483, -113.001769507023},
-        {0.0180241767744716, -50.659106996773},
-        {0.0182097740440606, -51.9955400073849},
-        {0.0202341129523759, -58.7842980136031},
-        {0.0241616217416751, -68.4951611413459},
-        {0.0683093991823195, -189.529376501088},
-        {0.0208552205904058, -58.4921580442905},
-        {0.0317959934940938, -89.7868593002707},
-        {0.053591180109515, -157.689621249245},
-        {0.0365069801332619, -111.16422124855},
-        {0.0245865373172698, -72.7591923191006},
-        {0.0175522047333345, -47.7394827706274},
-        {0.013573630420746, -35.8879027478178},
-        {0.0349864245666404, -103.250027677199},
-        {0.0134372095005333, -38.1475842706353},
-        {0.0158591900113134, -46.6511277609671},
-        {0.0147021310368038, -42.7787069143121},
-        {0.0237792588605192, -67.8915261463832},
-        {0.0351715310200649, -103.186662103448},
-        {0.0219652462841736, -60.7983508249309},
-        {0.0303280208597754, -81.7831571348138},
-        {0.0715706766444752, -207.729223836783},
-        {0.0275086522714445, -82.9987618429871},
-        {0.0166745783327018, -46.5288509566119},
-        {0.0139265277130164, -38.6421923620549},
-        {0.113206389453268, -321.042182863561},
-        {0.0515059293916753, -125.882704455781},
-        {0.11463286119422, -318.178016624334},
-        {0.0267804793994959, -72.8426227887584},
-        {0.0413436762767816, -111.946677937859},
-        {0.0254806589722055, -72.2967295045149},
-        {0.0534410538431901, -152.307749978204},
-        {0.0152151961920833, -39.7942358758763},
-        {0.0265859918138921, -67.480845695429},
-        {0.00972004852533338, -25.5634378523668},
-        {0.0306829362943066, -87.1951539363975},
-        {0.0918127868014328, -280.568864783106},
-        {0.0366346345870668, -108.51417200123},
-        {0.0430781500764492, -121.803146420465},
-        {0.436890650336331, -1293.18444200737}
-        };
-
-        for (int i = 0; i < testcode.length; i++) {
-            equation_parameter_map.put(testcode[i], equation_parameter[i]);
-        }
     }
+    //loc_sample_map :  test_name , pillarId ,julien Barcode
+    public static  Map<Integer , Integer >  getAgeMap(Map<String, String[]> loc_sample_map) throws SQLException, Exception{
+        Map<Integer , Integer > ageMap = new HashMap();
+        List<Integer> julienBarcodeList = new ArrayList();
+        for(String[] julienInfo : loc_sample_map.values()){
+            julienBarcodeList.add(Integer.parseInt(julienInfo[1]));
+        }     
+        DataBaseCon db = new LXDataBaseCon();
+        String sql = "select patient_barcode_internal as julien_barcode ,DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT(patient_birthdate, '%Y') AS Age from \n" +
+"vibrant_america_information.patient_details where patient_barcode_internal in("+StringOperation.getSampleSql(julienBarcodeList)  +");";
+//        System.out.println(sql);
+        ResultSet rs = db.read(sql);
+        while(rs.next()){
+            ageMap.put(rs.getInt(1) , rs.getInt(2));    
+        }
+        db.close();            
+        return ageMap;
+    }
+    
+    
+    
+    //Map<test , Map<location , unit>>
+    public static Map<String, Map<String, Float>> getNeuralUnitData(Map<String, Map<String, List<Float>>> map_raw ,
+                                                                    Map<String, List<Float>> negative_map , 
+                                                                    Map<String, String[]> loc_sample_map) throws SQLException, Exception{
+        Map<String, Map<String, Float>> unitMap = new LinkedHashMap();
+        NeuralZoomer zoomer = new NeuralZoomer();
+        String[] testcode = zoomer.getTestCode();
+        for(int i = 0 ; i < testcode.length ; i++)unitMap.put(testcode[i] , new HashMap());
+        
+        List<Integer> julienBarcodeList = new ArrayList();
+        //julien _barcode : age
+        Map<Integer , Integer > ageMap = new HashMap();
+        
+        for(String[] julienInfo : loc_sample_map.values()){
+            julienBarcodeList.add(Integer.parseInt(julienInfo[1]));
+        }
+        if(julienBarcodeList.size() > 5){
+            
+            DataBaseCon db = new LXDataBaseCon();
+            String sql = "select patient_barcode_internal as julien_barcode ,DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT(patient_birthdate, '%Y') AS Age from \n" +
+"vibrant_america_information.patient_details where patient_barcode_internal in("+StringOperation.getSampleSql(julienBarcodeList)  +");";
+            ResultSet rs = db.read(sql);
+            while(rs.next()){
+                ageMap.put(rs.getInt(1) , rs.getInt(2));    
+            }
+            db.close();            
+        }
+        
+        
+        for (String test : map_raw.keySet()) {
+            for (String location : map_raw.get(test).keySet()) {
+                List<Float> list = map_raw.get(test).get(location);
+                String[] testArr = test.split("_");
+                String type = testArr[testArr.length - 2].equals("IGA")? "igg" : "iga";
+                float avg_raw = Math_Tool.findMedian(list);
+                float avg_neg = Math_Tool.findMedian(negative_map.get(location + "_" + type));
+//                System.out.println(avg_raw + "   " + avg_neg);
+                unitMap.get(test).put(location,avg_raw / avg_neg);
+                
+            }
+        }
+        
+        
+        Map<String , Integer> test2IndexMap = new HashMap();
+        
+        for(int i = 0 ; i < testcode.length ; i++) test2IndexMap.put(testcode[i] , i);
+        
+        
+ 
+        for(String testCode : unitMap.keySet()){
+            List<Double> list = new ArrayList();
+            for(String loc : unitMap.get(testCode).keySet()){
+                if(!ageMap.containsKey(loc_sample_map.get(loc)[1]))continue;
+                int curAge = ageMap.get(loc_sample_map.get(loc)[1]);
+                if(curAge >= testAgeRange[test2IndexMap.get(testCode)][0] && curAge <= testAgeRange[test2IndexMap.get(testCode)][1]){
+                    list.add((double)unitMap.get(testCode).get(loc));
+                }
+            }
+            if(list.size() < 5){
+                list.clear();
+                for(float val : unitMap.get(testCode).values()) list.add((double)val);
+            }
+            
+            HashSet<Double> set = new HashSet(list);
+            double[] arr = new double[set.size()];
+            Iterator<Double> it = set.iterator();
+            int index = 0;
+            while(it.hasNext()){
+                arr[index++] = it.next();
+            }
+//            for(int i = 0 ; i < set.size() ; i++){
+//                arr[i] = list.get(i);
+//            } 
+            
+            double[] p = testPercentile[test2IndexMap.get(testCode)];
+            double x1 = Math_Tool.getPercentile(arr , p[0]);
+            double x2 = Math_Tool.getPercentile(arr , p[1]);
+            
+//            System.out.println(Arrays.toString(arr));
+//            System.out.println(x1 + " percentile  " + x2);
+            
+            double a = 10 / (x2 - x1);
+            double b = 10 - x1 * a;
+            
+            
+            
+            for(String loc : unitMap.get(testCode).keySet()){
+                float pre =  unitMap.get(testCode).get(loc);
+                float unit = (float)(pre * a + b) < 0 ? (float)(Math.random() * 8) : (float)(pre * a + b);
+//                System.out.println(unit);
+               
+                unitMap.get(testCode).put(loc, unit);
+            }
+        }
+        
+//        
+//        for(String testCode : unitMap.keySet()){
+//            for(String loc : unitMap.get(testCode).keySet()){
+//                System.out.println(testCode + "   " + loc + "  " + unitMap.get(testCode).get(loc));
+//            }
+//        }
+        return unitMap;
+    }
+    //loc_sample_map :  test_name , pillarId ,julien Barcode
+    
+    
+    public static Map<String , NeuralDupData> getDupUnitData( Map<String, String[]> loc_sample_map) throws SQLException, Exception{
+        Map<String , NeuralDupData> mapUnit = new HashMap();
+        
+        Map<String ,String> oldTest2NewTest = new HashMap();
+        oldTest2NewTest.put("ANTI_TUBUL_IGM_V2" , "TUBULIN_IGM_V3");
+        oldTest2NewTest.put("ANTI_TUBUL_IGG_IGA_V2" , "TUBULIN_IGG_IGA_V3");
+        oldTest2NewTest.put("ANTI_S100B_IGM_V2" , "S100B_IGM_V3");
+        oldTest2NewTest.put("ANTI_S100B_IGG_IGA_V2" , "S100B_IGG_IGA_V3");
+        oldTest2NewTest.put("ANTI_PURKI_CEL_IGM_V2" , "PURKINJE_CELL_IGM_V3");
+        oldTest2NewTest.put("ANTI_PURKI_CEL_IGG_IGA_V2" , "PURKINJE_CELL_IGG_IGA_V3");
+        oldTest2NewTest.put("ANTI_NEURO_SPE_ENO_IGM_V2" , "NEURON_SPECIFIC_ENOLASE_IGM_V3");
+        oldTest2NewTest.put("ANTI_NEURO_SPE_ENO_IGG_V2" , "NEURON_SPECIFIC_ENOLASE_IGG_IGA_V3");
+        oldTest2NewTest.put("ANTI_MYELI_BAS_PRO_IGM_V2" , "MYELIN_BASIC_IGM_V3");
+        oldTest2NewTest.put("ANTI_MYELI_BAS_PRO_IGG_V2" , "MYELIN_BASIC_IGG_IGA_V3");
+        oldTest2NewTest.put("ANTI_HSV1_IGM_V2" , "HSV1_IGM_V3");
+        oldTest2NewTest.put("ANTI_HSV1_IGG_IGA_V2" , "HSV1_IGG_IGA_V3");
+        oldTest2NewTest.put("ANTI_GM2_IGM_V2" , "GM2_IGM_V3");
+        oldTest2NewTest.put("ANTI_GM2_IGG_IGA_V2" , "GM2_IGG_IGA_V3");
+        oldTest2NewTest.put("ANTI_GM1_IGM_V2" , "GM1_IGM_V3");
+        oldTest2NewTest.put("ANTI_GM1_IGG_IGA_V2" , "GM1_IGG_IGA_V3");
+        oldTest2NewTest.put("ANTI_CEREB_IGM_V2" , "CEREBELLUM_IGM_V3");
+        oldTest2NewTest.put("ANTI_CEREB_IGG_IGA_V2" , "CEREBELLUM_IGG_IGA_V3");
+        
+        
+        
+        
+        
+        List<Integer> julienList = new ArrayList();
+        for(String[] info : loc_sample_map.values()){
+            julienList.add(Integer.parseInt(info[1]));
+        }
+        
+        
+        
+        
+        
+        Map<String , String> old2NewMap1 = new HashMap();
+        
+        String sqlJu = StringOperation.getSampleSql(julienList).toString();
+
+        //check v3
+        DataBaseCon db = new LXDataBaseCon();
+        String sqlDupV3 = "SELECT\n" +
+"   group_concat(sd.julien_barcode order by sd.julien_barcode desc) as julien\n" +
+"FROM\n" +
+"    vibrant_america_information.`patient_details` pd\n" +
+"        JOIN\n" +
+"    vibrant_america_information.`sample_data` sd ON sd.`patient_id` = pd.`patient_id`\n" +
+"        JOIN\n" +
+"    vibrant_america_information.`customers_of_patients` cop ON cop.`patient_id` = sd.`patient_id`\n" +
+"        AND cop.`customer_id` = sd.`customer_id`\n" +
+"        join\n" +
+"          vibrant_america_information.`customer_details` cd on  cd.customer_id = sd.customer_id\n" +
+"        AND cop.`customer_id` = sd.`customer_id`\n" +
+"        join vibrant_america_information.selected_test_list slt on slt.sample_id = sd.sample_id\n" +
+"        join `vibrant_america_test_result`.`result_neural_zoomer_v3_panel1` rwp on rwp.sample_id = sd.sample_id \n" +
+"WHERE\n" +
+"   slt.order_neural_zoomer_v3_panel1 != 0 \n" +
+"   group by PD.PATIENT_ID having count(*)>=2 and julien REGEXP '"+ sqlJu.replaceAll(",", "|")  +"'   order by substring(group_concat(sd.julien_barcode order by sd.julien_barcode desc),1,10) desc;";
+        System.out.println(sqlDupV3);
+        ResultSet rsDupV3 = db.read(sqlDupV3);
+      
+        while(rsDupV3.next()){
+            String[] tmp = rsDupV3.getString(1).split(",");
+            old2NewMap1.putIfAbsent(tmp[1], tmp[0]);
+        }
+      
+        
+        List<Integer> v3JulienList = new ArrayList();
+        for(String tmp : old2NewMap1.keySet()) v3JulienList.add(Integer.parseInt(tmp));
+        
+//        System.out.println("old2NewMap1" + old2NewMap1);
+//        System.out.println("v3JulienList" + v3JulienList);
+        if(!v3JulienList.isEmpty()){
+            String sqlDataV3 = 
+    "select julien_barcode , a.* , b.* ,c.* ,d.* from vibrant_america_information.sample_data as sd join\n" +
+    "`vibrant_america_test_result`.result_neural_zoomer_v3_panel1 as a on sd.sample_id = a.sample_id join\n" +
+    "`vibrant_america_test_result`.result_neural_zoomer_v3_panel2 as b on a.sample_id = b.sample_id join\n" +
+    "`vibrant_america_test_result`.result_neural_zoomer_v3_panel3 as c on a.sample_id = c.sample_id join\n" +
+    "`vibrant_america_test_result`.result_neural_zoomer_v3_panel4 as d on a.sample_id = d.sample_id\n" +
+    " where julien_barcode in ("+ StringOperation.getSampleSql(v3JulienList).toString() +");";
+           
+            ResultSet rsDataV3 = db.read(sqlDataV3);
+            
+            int col = rsDataV3.getMetaData().getColumnCount();
+            while(rsDataV3.next()){
+                 Map<String ,Float> curMap = new HashMap();
+                 String oldJulien = rsDataV3.getString(1);
+                 String newJulien = old2NewMap1.get(oldJulien);
+                 for(int i = 2 ; i <= col ; i++){
+                     String label = rsDataV3.getMetaData().getColumnLabel(i);
+                     if(label.startsWith("DOPAMINE_R"))continue;
+                     if(label.equals("sample_id")) continue;
+                     curMap.put(label , rsDataV3.getFloat(i));
+                 }
+                 mapUnit.put(newJulien , new NeuralDupData(oldJulien , curMap));
+            }
+            
+        }
+        
+        
+        // check v2
+        Map<String ,String> old2NewMap2 = new HashMap();
+        String sqlDupV2 = "SELECT\n" +
+"   group_concat(sd.julien_barcode order by sd.julien_barcode desc) as julien\n" +
+"FROM\n" +
+"    vibrant_america_information.`patient_details` pd\n" +
+"        JOIN\n" +
+"    vibrant_america_information.`sample_data` sd ON sd.`patient_id` = pd.`patient_id`\n" +
+"        JOIN\n" +
+"    vibrant_america_information.`customers_of_patients` cop ON cop.`patient_id` = sd.`patient_id`\n" +
+"        AND cop.`customer_id` = sd.`customer_id`\n" +
+"        join\n" +
+"          vibrant_america_information.`customer_details` cd on  cd.customer_id = sd.customer_id\n" +
+"        AND cop.`customer_id` = sd.`customer_id`\n" +
+"        join vibrant_america_information.selected_test_list slt on slt.sample_id = sd.sample_id\n" +
+"        join `vibrant_america_test_result`.`result_wellness_panel25` rwp on rwp.sample_id = sd.sample_id \n" +
+"WHERE\n" +
+"   slt.Order_Wellness_Panel25 != 0\n" +
+"   group by PD.PATIENT_ID having count(*)>=2 and julien REGEXP '"+ sqlJu.replaceAll(",", "|") +"' order by substring(group_concat(sd.julien_barcode order by sd.julien_barcode desc),1,10) desc;";
+        System.out.println(sqlDupV2);
+        ResultSet rsDupV2 = db.read(sqlDupV2);
+       
+        while(rsDupV2.next()){
+            String[] tmp = rsDupV2.getString(1).split(",");
+            old2NewMap2.putIfAbsent(tmp[1], tmp[0]);
+        }
+        
+        
+        List<Integer> v2JulienList = new ArrayList();
+        
+        for(String tmp : old2NewMap2.keySet()) v2JulienList.add(Integer.parseInt(tmp));
+        
+//        System.out.println("old2NewMap2" + old2NewMap2);
+//        System.out.println("v2JulienList" + v2JulienList);
+        if(!v2JulienList.isEmpty()){
+            String sqlDataV2 = "select julien_barcode , a.*  from vibrant_america_information.sample_data as sd join\n" +
+    "`vibrant_america_test_result`.`result_wellness_panel25` as a on sd.sample_id = a.sample_id\n" +
+    " where julien_barcode in ("+ StringOperation.getSampleSql(v2JulienList).toString() +");";
+            ResultSet rsDataV2 = db.read(sqlDataV2);
+            
+            int col = rsDataV2.getMetaData().getColumnCount();
+            while(rsDataV2.next()){
+                 Map<String ,Float> curMap = new HashMap();
+                 String oldJulien = rsDataV2.getString(1);
+                 String newJulien = old2NewMap2.get(oldJulien);
+                 for(int i = 2 ; i <= col ; i++){
+                     String label = rsDataV2.getMetaData().getColumnLabel(i);
+                     if(label.equals("sample_id")) continue;
+                     curMap.put(oldTest2NewTest.get(label) , rsDataV2.getFloat(i));
+                 }
+                 mapUnit.put(newJulien , new NeuralDupData(oldJulien , curMap));
+            }
+            
+        }
+        
+//        for(String julien : mapUnit.keySet() ){
+//            System.out.println(julien + "   " +mapUnit.get(julien).getJulienBarcode());
+//            System.out.println(mapUnit.get(julien).getUnitMap());
+//        }
+        db.close();
+        return mapUnit;
+    }
+    
+    
+    
 }
+
