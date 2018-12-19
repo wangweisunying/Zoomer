@@ -25,7 +25,11 @@ import model.StringOperation;
  * @author Wei Wang
  */
 public class NeuralZoomer extends Zoomer {
-
+    
+    
+    private static double percentileDis = 500;
+    private static double percentileOffset = 2000;        
+            
     private static float qcArr[] = new float[]{2.1f, 3.9f, 1.05f};
     private static int testCodeCt = 110;
     private static int[][] testAgeRange = new int[][]{{0,18},
@@ -498,8 +502,9 @@ public class NeuralZoomer extends Zoomer {
                 String type = testArr[testArr.length - 2].equals("IGA")? "igg" : "iga";
                 float avg_raw = Math_Tool.findMedian(list);
                 float avg_neg = Math_Tool.findMedian(negative_map.get(location + "_" + type));
-//                System.out.println(avg_raw + "   " + avg_neg);
-                unitMap.get(test).put(location,avg_raw / avg_neg);
+                float unit = avg_raw / avg_neg;
+                if(unit > 1000) unit = 1; 
+                unitMap.get(test).put(location,unit);
                 
             }
         }
@@ -548,9 +553,11 @@ public class NeuralZoomer extends Zoomer {
             
             
             
+            
             for(String loc : unitMap.get(testCode).keySet()){
                 float pre =  unitMap.get(testCode).get(loc);
                 float unit = (float)(pre * a + b) < 0 ? (float)(Math.random() * 8) : (float)(pre * a + b);
+                unit = unit > 30 ? 30 : unit;
 //                System.out.println(unit);
                
                 unitMap.get(testCode).put(loc, unit);

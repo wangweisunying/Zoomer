@@ -35,11 +35,13 @@ import model.ExcelOperation;
 import model.LXDataBaseCon;
 import model.Math_Tool;
 import model.V7DataBaseCon;
+import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.ComparisonOperator;
 import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -58,10 +60,10 @@ public class Zoomer_QuickProject {
     private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut";
 
     public static void main(String[] args) throws SQLException, IOException, Exception {
-        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER  ,ZOOMER_TEST.NEURAL_ZOOMER};
-        String[] table = {"lectin_run_39" ,"neural_run_43"};
-//        ZOOMER_TEST[] test = {ZOOMER_TEST.NEURAL_ZOOMER};
-//        String[] table = {};
+//        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER  ,ZOOMER_TEST.NEURAL_ZOOMER};
+//        String[] table = {"lectin_run_39" ,"neural_run_43"};
+        ZOOMER_TEST[] test = {ZOOMER_TEST.NEURAL_ZOOMER};
+        String[] table = {"neural_run_43"};
 
 //      
         List<Chunk> list = new ArrayList();
@@ -200,9 +202,10 @@ public class Zoomer_QuickProject {
             if (test_name.equals("Neural")) {
               
                 CellStyle styleOrange = wb.createCellStyle();
-                styleOrange.setFillForegroundColor(IndexedColors.ORANGE.getIndex());
-                styleOrange.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-                
+                Font font = wb.createFont();
+                font.setColor(HSSFColor.HSSFColorPredefined.ORANGE.getIndex());
+                styleOrange.setFont(font);
+            
                 
                 
           
@@ -279,8 +282,8 @@ public class Zoomer_QuickProject {
                     String sample = loc_sample_map.get(location)[1];
 
                     int row_index = 0;
-                    sheet.getRow(row_index++).createCell(col).setCellValue(4); // cf value
-                    sheet.getRow(row_index++).createCell(col).setCellValue(4); // cf value
+                    sheet.getRow(row_index++).createCell(col).setCellValue(1); // cf value
+                    sheet.getRow(row_index++).createCell(col).setCellValue(1); // cf value
 
                     sheet.getRow(row_index++).createCell(col).setCellValue(pillarId);
                     sheet.getRow(row_index++).createCell(col).setCellValue(location);
@@ -309,7 +312,7 @@ public class Zoomer_QuickProject {
                     Cell cell = sheet.getRow(row_index++).createCell(col);
                     String colName = ExcelOperation.transferIntgerToString(col + 1);
                     String formula = colName + "6:" + colName + (test_code.length + 5);
-                    cell.setCellFormula("COUNTIF(" + formula + ",\">2\")");
+                    cell.setCellFormula("COUNTIF(" + formula + ",\">10\")");
 
                     col++;
                 }
