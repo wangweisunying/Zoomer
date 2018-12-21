@@ -126,7 +126,24 @@ public class Zoomer_toDB {
 
             for (String pillarId : pillarId_set) {
                 String sqlUpdate = "UPDATE `vibrant_test_tracking`.`pillar_plate_info` SET `status`='finish' WHERE `pillar_plate_id`='" + pillarId + "'";
-
+                if (testName.equals("neural")){
+                    String sqlUpdate2 = "UPDATE `vibrant_test_tracking`.`pillar_plate_info` SET test_name = 'Neural_V3' WHERE `pillar_plate_id`='" + pillarId + "'";
+                    String sqlUpdate3 = "update vibrant_test_tracking.pillar_info set test_type = 'Neural_V3' where pillar_plate_id = '"+ pillarId +"';";
+                    db.write(sqlUpdate2);
+                    db.write(sqlUpdate3);
+                    System.out.println(sqlUpdate2);
+                    System.out.println(sqlUpdate3);
+                }
+                if (testName.equals("lectin") || testName.equals("soy")){
+                    String sqlUpdate2 = "UPDATE `vibrant_test_tracking`.`pillar_plate_info` SET test_name = 'Lectin_Soy' WHERE `pillar_plate_id`='" + pillarId + "'";
+                    String sqlUpdate3 = "update vibrant_test_tracking.pillar_info set test_type = 'Lectin_Soy' where pillar_plate_id = '"+ pillarId +"';";
+                    db.write(sqlUpdate2);
+                    db.write(sqlUpdate3);
+                    System.out.println(sqlUpdate2);
+                    System.out.println(sqlUpdate3);
+                }
+                
+                
                 db.write(sqlUpdate);
                 System.out.println(sqlUpdate);
                 sqlUpdate = "INSERT INTO `tsp_test_qc_data`.`test_qc_data` (`test_name`, `pillar_plate_id`, `cal_1`, `pos_ctrl_1`, `neg_ctrl_1`,`time`) VALUES ('" + testName

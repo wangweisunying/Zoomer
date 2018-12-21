@@ -30,7 +30,7 @@ public class NeuralZoomer extends Zoomer {
     private static double percentileDis = 500;
     private static double percentileOffset = 2000;        
             
-    private static float qcArr[] = new float[]{2.1f, 3.9f, 1.05f};
+    private static float qcArr[] = new float[]{9.8f, 24.5f, 1.05f};
     private static int testCodeCt = 110;
     private static int[][] testAgeRange = new int[][]{{0,18},
                                                         {40,100},
@@ -572,6 +572,78 @@ public class NeuralZoomer extends Zoomer {
 //        }
         return unitMap;
     }
+    // location  m, floatG ,floatA      // testCode , location
+    public static Map< String , float[]> getCF(Map<String, Map<String, Float>>  unitMap){
+        Map<String , float[]>  cfMap = new HashMap();
+        Map<String , List<Float>>  locUnitMap = new HashMap();
+        for(String testCode : unitMap.keySet()){
+            for(String loc : unitMap.get(testCode).keySet()){
+                cfMap.putIfAbsent(loc, new float[]{1f , 1f});
+                String[] arr = testCode.split("_");
+                String key = loc + ":" + arr[arr.length - 2];
+                locUnitMap.computeIfAbsent( key, x -> new ArrayList()).add(unitMap.get(testCode).get(loc));
+            }
+        }
+        
+        
+        
+        for(String locATestCode : locUnitMap.keySet()){
+            String[] arr = locATestCode.split(":");
+            int index = arr[1].equals("IGA") ? 0 : 1;
+            float cf = 1f;
+            List<Float> list = locUnitMap.get(locATestCode);
+            int ctPos = 0;
+            for(float tmp : list){
+                if(tmp > 10) ++ctPos;
+            } 
+            if(index == 0){
+                while(ctPos > 15 ){
+         
+                    cf += 0.1f;
+                    ctPos = 0;
+                    for(float tmp : list){
+                        if(tmp / cf > 10) ++ctPos;
+                    } 
+                }
+                while(ctPos < 2 ){
+               
+                    cf -= 0.1f;
+                    ctPos = 0;
+                    for(float tmp : list){
+                        if(tmp / cf > 10) ++ctPos;
+                    } 
+                }
+                
+            }else{
+                while(ctPos > 6 ){
+                  
+                    cf += 0.1f;
+                    ctPos = 0;
+                    for(float tmp : list){
+                        if(tmp / cf > 10) ++ctPos;
+                    } 
+                }
+                while(ctPos < 0 ){
+                 
+                    cf -= 0.1f;
+                    ctPos = 0;
+                    for(float tmp : list){
+                        if(tmp / cf > 10) ++ctPos;
+                    } 
+                }
+            }
+            cfMap.get(arr[0])[index] = cf;
+        }
+        
+//        for(String loc : cfMap.keySet()){
+//            System.out.println(loc + "   " + Arrays.toString(cfMap.get(loc)));
+//        }
+        
+        return cfMap;
+    
+    }
+    
+    
     //loc_sample_map :  test_name , pillarId ,julien Barcode
     
     

@@ -268,6 +268,9 @@ public class Zoomer_QuickProject {
                 
                 
                 //init the vertical CF in excel
+                
+                Map< String , float[]> cfMap = NeuralZoomer.getCF(map_unit);
+                
                 int colVCF = 2 + loc_sample_map.size();
                 int rowVCF = 5;
                 String formulaVCFCol = ExcelOperation.transferIntgerToString(colVCF + 1);
@@ -282,8 +285,9 @@ public class Zoomer_QuickProject {
                     String sample = loc_sample_map.get(location)[1];
 
                     int row_index = 0;
-                    sheet.getRow(row_index++).createCell(col).setCellValue(1); // cf value
-                    sheet.getRow(row_index++).createCell(col).setCellValue(1); // cf value
+                    float[] cf = cfMap.get(location);
+                    sheet.getRow(row_index++).createCell(col).setCellValue(cf[0]); // cf value
+                    sheet.getRow(row_index++).createCell(col).setCellValue(cf[1]); // cf value
 
                     sheet.getRow(row_index++).createCell(col).setCellValue(pillarId);
                     sheet.getRow(row_index++).createCell(col).setCellValue(location);
