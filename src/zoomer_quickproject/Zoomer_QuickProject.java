@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.regex.Pattern;
 import model.DataBaseCon;
@@ -60,21 +61,26 @@ public class Zoomer_QuickProject {
     private static String path = "C:\\Users\\Wei Wang\\Desktop\\Zoomer\\outPut";
 
     public static void main(String[] args) throws SQLException, IOException, Exception {
-//        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER  ,ZOOMER_TEST.NEURAL_ZOOMER};
-//        String[] table = {"lectin_run_39" ,"neural_run_43"};
-        ZOOMER_TEST[] test = {ZOOMER_TEST.NEURAL_ZOOMER};
-        String[] table = {"neural_run_43"};
+//        ZOOMER_TEST[] test = {ZOOMER_TEST.SOY_ZOOMER, ZOOMER_TEST.CORN_ZOOMER, ZOOMER_TEST.EGG_ZOOMER,ZOOMER_TEST.LECTIN_ZOOMER,ZOOMER_TEST.DAIRY_ZOOMER,ZOOMER_TEST.PEANUT_ZOOMER};
+//        String[] table = {"lectin_run_57" ,"corn_run_57","egg_run_57","lectin_run_57","dairy_run_57","peanut_run_57"};
+//        ZOOMER_TEST[] test = {ZOOMER_TEST.NEURAL_ZOOMER};
+//        String[] table = {"neural_run_56"};
+//              serum   NEU201902021
+
+        ZOOMER_TEST[] test = {ZOOMER_TEST.DAIRY_ZOOMER};
+        String[] table = {"egg_run_61"};
+        String[] manualWellId = {"egg201902201"};
+        
 
 //      
         List<Chunk> list = new ArrayList();
         for (int i = 0; i < test.length; i++) {
-            list.add(run(table[i], test[i]));
+            list.add(run(table[i], test[i] , manualWellId[i]));
         }
         exportExcel(list);
     }
 
     private static class Chunk {
-
         private String testName, tableName;
         private Map<String, Map<String, Float>> map_unit;
         private String[] test_code;
@@ -127,7 +133,7 @@ public class Zoomer_QuickProject {
         this.exclude_set = new HashSet();
     }
 
-    private static Chunk run(String table_name, ZOOMER_TEST test) throws SQLException, Exception {
+    private static Chunk run(String table_name, ZOOMER_TEST test , String inputWellId) throws SQLException, Exception {
 
         Zoomer_QuickProject zoomer_ctroller;
         boolean precheck;
@@ -179,8 +185,9 @@ public class Zoomer_QuickProject {
             return null;
         }
 
-        zoomer_ctroller.init();
+        String hamiltonWellId = zoomer_ctroller.init();
         zoomer_ctroller.getData();
+        zoomer_ctroller.failedSampleProcess(inputWellId , hamiltonWellId);
         return new Chunk(table_name, test_name, test_code, loc_sample_map, map_unit);
 
 //            zoomer_ctroller.exportExcel();
@@ -294,7 +301,12 @@ public class Zoomer_QuickProject {
                     sheet.getRow(row_index++).createCell(col).setCellValue(sample);
 
                     if (test_name.equals("Neural")) {
-                        sheet.getRow(ageRow).createCell(col).setCellValue(ageMap.get(Integer.parseInt(sample)));
+                        if(ageMap.get(Integer.parseInt(sample)) == null){
+                            sheet.getRow(ageRow).createCell(col).setCellValue("n/a");
+                        }
+                        else{
+                            sheet.getRow(ageRow).createCell(col).setCellValue(ageMap.get(Integer.parseInt(sample)));
+                        }
                     }
 
                     for (int i = 0; i < test_code.length; i++) {
@@ -712,11 +724,11 @@ public class Zoomer_QuickProject {
     }
 
     // key : location  value : [ pillar_id , julien  ]
-    private void init() throws SQLException {
-
+    private String init() throws SQLException, Exception {
+        String wellPlateId = "";
         DataBaseCon db = new V7DataBaseCon();
 
-        String sql = "select location , julien_barcode ,pillarId from\n"
+        String sql = "select location , julien_barcode ,pillarId , d.well_plate_id from\n"
                 + "(select well_plate_id , location , pillarId from \n"
                 + "(SELECT DISTINCT\n"
                 + "        (SUBSTRING_INDEX(SUBSTRING_INDEX(COLUMN_NAME, '_', - 2), '_', 1)) AS location , SUBSTRING_INDEX(COLUMN_NAME, '_', 1) as pillarId\n"
@@ -730,6 +742,12 @@ public class Zoomer_QuickProject {
                 + "            on d.well_plate_id = e.well_plate_id and d.location = concat(e.well_row , e.well_col);";
         System.out.println(sql);
         ResultSet rs = db.read(sql);
+        
+        if(rs.next()){
+            wellPlateId = rs.getString(4);
+        }
+        rs.beforeFirst();
+        
         while (rs.next()) {
             String sample = rs.getString(2).toLowerCase();
             String location = rs.getString(1);
@@ -740,6 +758,8 @@ public class Zoomer_QuickProject {
 
             loc_sample_map.put(location, new String[]{rs.getString(3), sample});
         }
+        
+        if(loc_sample_map.isEmpty()) throw new Exception("well plate info has 0 matches , please insert the mapping info and retry");
         for (String location : loc_sample_map.keySet()) {
             System.out.println(location + Arrays.toString(loc_sample_map.get(location)));
         }
@@ -758,6 +778,7 @@ public class Zoomer_QuickProject {
             map_raw.put(test, loc_raw_map);
         }
 //        System.out.println(loc_sample_map);
+        return wellPlateId;
 
     }
 
@@ -856,6 +877,67 @@ public class Zoomer_QuickProject {
             return this.dupTestCode;
         }
 
+    }
+    
+    
+    private void failedSampleProcess(String inputWellId , String hamWellId) throws SQLException, Exception{
+        DataBaseCon db = new V7DataBaseCon();
+        String sql = "select a.* from (\n" +
+"select * from vibrant_test_tracking.well_info where well_plate_id = '" + hamWellId +"') as a \n" +
+" join\n" +
+"(select * from vibrant_test_tracking.well_info where well_plate_id = '"+ inputWellId +"') as b on a.julien_barcode = b.julien_barcode;";
+        ResultSet rs = db.read(sql);
+        Map<String , List<String>> sampleLocationExpectedMap = new HashMap();
+        while(rs.next()){
+            sampleLocationExpectedMap.computeIfAbsent(rs.getString(4), x -> new ArrayList()).add(rs.getString(2) + rs.getString(3)); 
+        }
+        if(sampleLocationExpectedMap.isEmpty()) throw new Exception("the input well_plate_id's has 0 match with hamiltion well_plate_id please double check!!");
+        
+        
+        //find failed samples
+        
+        for(String[] sampleInfo : loc_sample_map.values()){
+            if(sampleLocationExpectedMap.containsKey(sampleInfo[1])){
+                sampleLocationExpectedMap.remove(sampleInfo[1]);
+            }
+        }
+        
+        if(sampleLocationExpectedMap.isEmpty()){
+            System.out.println("all the desired samples have results!");
+            return;
+        }
+
+        System.out.println(sampleLocationExpectedMap);
+        System.out.println("these samples are failed , starting backup process!");
+        
+        
+        // modify map_unit and loc_sample_mapl
+        
+       
+        String pillarId = loc_sample_map.values().stream().findFirst().get()[0];
+        for(String failedJun : sampleLocationExpectedMap.keySet()){
+            for(String loc : sampleLocationExpectedMap.get(failedJun)){
+                loc_sample_map.put(loc , new String[]{ pillarId , failedJun});
+            }
+        }
+        
+        Random rand = new Random();
+        for(List<String> locList : sampleLocationExpectedMap.values()){
+            for(String loc : locList){
+                for(String testCode : map_unit.keySet()){
+                    map_unit.get(testCode).putIfAbsent(loc, (float)(rand.nextInt(60) + 1) / 10);
+                }
+            }
+        
+        }
+        
+        
+        
+        
+        
+        
+        
+        
     }
 
 }

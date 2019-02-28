@@ -580,7 +580,8 @@ public class NeuralZoomer extends Zoomer {
             for(String loc : unitMap.get(testCode).keySet()){
                 cfMap.putIfAbsent(loc, new float[]{1f , 1f});
                 String[] arr = testCode.split("_");
-                String key = loc + ":" + arr[arr.length - 2];
+                String test = arr[arr.length - 2].endsWith("IGM")? "IGM" : "IGA";
+                String key = loc + ":" + test;
                 locUnitMap.computeIfAbsent( key, x -> new ArrayList()).add(unitMap.get(testCode).get(loc));
             }
         }
@@ -632,6 +633,8 @@ public class NeuralZoomer extends Zoomer {
                     } 
                 }
             }
+            
+//            System.out.println(Arrays.toString(arr) + "   " + cf);
             cfMap.get(arr[0])[index] = cf;
         }
         
@@ -642,6 +645,9 @@ public class NeuralZoomer extends Zoomer {
         return cfMap;
     
     }
+    
+    
+    
     
     
     //loc_sample_map :  test_name , pillarId ,julien Barcode
@@ -678,10 +684,6 @@ public class NeuralZoomer extends Zoomer {
         for(String[] info : loc_sample_map.values()){
             julienList.add(Integer.parseInt(info[1]));
         }
-        
-        
-        
-        
         
         Map<String , String> old2NewMap1 = new HashMap();
         
