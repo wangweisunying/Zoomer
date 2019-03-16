@@ -446,7 +446,7 @@ public class NeuralZoomer extends Zoomer {
         conditions[54] = new NeuralCondition("" , "" , "" , ".*ASVKV.*%.*SVKVL.*%.*VKVLL.*%.*KVLLG.*%.*VLLGR.*%.*LLGRK.*%.*LGRKS.*%.*GRKSD.*%.*RKSDS.*%.*KSDSE.*%.*SDSER.*%.*DSERG.*", "");
     }
     //loc_sample_map :  test_name , pillarId ,julien Barcode
-    public static  Map<Integer , Integer >  getAgeMap(Map<String, String[]> loc_sample_map) throws SQLException, Exception{
+    public static  Map<Integer , Integer > getAgeMap(Map<String, String[]> loc_sample_map) throws SQLException, Exception{
         Map<Integer , Integer > ageMap = new HashMap();
         List<Integer> julienBarcodeList = new ArrayList();
         for(String[] julienInfo : loc_sample_map.values()){
@@ -483,7 +483,6 @@ public class NeuralZoomer extends Zoomer {
             julienBarcodeList.add(Integer.parseInt(julienInfo[1]));
         }
         if(julienBarcodeList.size() > 5){
-            
             DataBaseCon db = new LXDataBaseCon();
             String sql = "select patient_barcode_internal as julien_barcode ,DATE_FORMAT(NOW(), '%Y') - DATE_FORMAT(patient_birthdate, '%Y') AS Age from \n" +
 "vibrant_america_information.patient_details where patient_barcode_internal in("+StringOperation.getSampleSql(julienBarcodeList)  +");";

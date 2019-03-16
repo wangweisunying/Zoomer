@@ -8,6 +8,7 @@ package zoomer_quickproject;
 import Zoomer.Condition;
 import Zoomer.CornZoomer;
 import Zoomer.DairyZoomer;
+import Zoomer.DupData;
 import Zoomer.EggZoomer;
 import Zoomer.LectinZoomer;
 import Zoomer.NeuralDupData;
@@ -66,10 +67,14 @@ public class Zoomer_QuickProject {
 //        ZOOMER_TEST[] test = {ZOOMER_TEST.NEURAL_ZOOMER};
 //        String[] table = {"neural_run_56"};
 //              serum   NEU201902021
+//        ZOOMER_TEST[] test ={ZOOMER_TEST.LECTIN_ZOOMER , ZOOMER_TEST.CORN_ZOOMER , ZOOMER_TEST.EGG_ZOOMER,ZOOMER_TEST.PEANUT_ZOOMER,ZOOMER_TEST.NEURAL_ZOOMER};
+//        String[] table = {"lectin_run_63" ,"corn_run_63","egg_run_63","peanut_run_63","neural_run_64"};
+//        String[] manualWellId = {"lszm201902271","czm201902271","egg201902271","pea201902271","neu201903021"};
 
-        ZOOMER_TEST[] test = {ZOOMER_TEST.DAIRY_ZOOMER};
-        String[] table = {"egg_run_61"};
-        String[] manualWellId = {"egg201902201"};
+
+        ZOOMER_TEST[] test = {ZOOMER_TEST.EGG_ZOOMER};
+        String[] table = {"egg_run_66"};
+        String[] manualWellId = {"egg201903091"};
         
 
 //      
@@ -205,17 +210,13 @@ public class Zoomer_QuickProject {
             Map<String, Map<String, Float>> map_unit = chunk.map_unit;
             String[] test_code = chunk.test_code;
             Map<String, String[]> loc_sample_map = chunk.loc_sample_map;
-
-            if (test_name.equals("Neural")) {
-              
-                CellStyle styleOrange = wb.createCellStyle();
-                Font font = wb.createFont();
-                font.setColor(HSSFColor.HSSFColorPredefined.ORANGE.getIndex());
-                styleOrange.setFont(font);
             
-                
-                
-          
+            CellStyle styleOrange = wb.createCellStyle();
+            Font font = wb.createFont();
+            font.setColor(HSSFColor.HSSFColorPredefined.ORANGE.getIndex());
+            styleOrange.setFont(font);
+            
+            if (test_name.equals("Neural")) {
                 Sheet sheet = wb.createSheet(tableName + "_" + test_name);
                 int row = test_code.length + test_code.length + 30, col = 0;
                 sheet.createRow(row++).createCell(col).setCellValue("CFG");
@@ -381,7 +382,7 @@ public class Zoomer_QuickProject {
                 //get the dup data
                 ChunkDupData chunkDup = getDup(loc_sample_map, test_name);
                 Sheet sheet = wb.createSheet(tableName + "_" + test_name);
-                int row = test_code.length + 30, col = 0;
+                int row = 2 * test_code.length + 30, col = 0;
                 sheet.createRow(row++).createCell(col).setCellValue("CFG");
                 sheet.createRow(row++).createCell(col).setCellValue("CFA");
                 sheet.createRow(row++).createCell(col).setCellValue("Pillar_Id");
@@ -397,7 +398,7 @@ public class Zoomer_QuickProject {
                     String pillarId = loc_sample_map.get(location)[0];
                     String sample = loc_sample_map.get(location)[1];
 
-                    int row_index = test_code.length + 30;
+                    int row_index = 2 * test_code.length + 30;
                     sheet.getRow(row_index++).createCell(col).setCellValue(4);
                     sheet.getRow(row_index++).createCell(col).setCellValue(4);
 
@@ -426,6 +427,11 @@ public class Zoomer_QuickProject {
                 }
                 row++;
                 sheet.createRow(row++).createCell(col).setCellValue("Pos Count");
+                
+                //set duplicate row
+                int dupRow = row;
+                int dupJunRow = dupRow;
+                
                 //generate the dup title on row  
                 if (chunkDup != null) {
                     String[] dupTestCodeArr = chunkDup.getDupTestCode();
@@ -460,7 +466,7 @@ public class Zoomer_QuickProject {
                         Cell cell = sheet.getRow(row_index++).createCell(col);
                         cell.setCellType(CellType.FORMULA);
                         String colName = ExcelOperation.transferIntgerToString(col + 1);
-                        int cfRow = (row_index + test_code.length + 30);
+                        int cfRow = (row_index + 2 * test_code.length + 30);
                         String formula = colName + "" + cfRow;
                         String cfCellG = colName + "1";
                         String cfCellA = colName + "2";
@@ -498,7 +504,69 @@ public class Zoomer_QuickProject {
                 ExcelOperation.setConditionalFormatting(sheet, IndexedColors.RED, ComparisonOperator.GT, new String[]{"4"}, range);
                 ExcelOperation.setConditionalFormatting(sheet, IndexedColors.YELLOW, ComparisonOperator.BETWEEN, new String[]{"2", "4"}, range);
                 ExcelOperation.setConditionalFormatting(sheet, IndexedColors.GREEN, ComparisonOperator.LT, new String[]{"2"}, range);
+                
+                
+                //generate the dup title on row  
+                
+                //get the dup data newJulien  <old julien , map<new Testcode ,val>>
+                
+                Map<String , DupData> dupMap = new HashMap();
+                if(test_name.equals("Corn")){
+                    dupMap = CornZoomer.getDupUnitData(loc_sample_map);
+                }
+                else if(test_name.equals("Dairy")){
+                    dupMap = CornZoomer.getDupUnitData(loc_sample_map);
+                }
+                else if(test_name.equals("Egg")){
+                    dupMap = CornZoomer.getDupUnitData(loc_sample_map);
+                }
+                else if(test_name.equals("Lectin")){
+                    dupMap = CornZoomer.getDupUnitData(loc_sample_map);
+                }
+                else if(test_name.equals("Nut")){
+                    dupMap = CornZoomer.getDupUnitData(loc_sample_map);
+                }
+                else if(test_name.equals("Peanut")){
+                    dupMap = CornZoomer.getDupUnitData(loc_sample_map);
+                }
+                else if(test_name.equals("Soy")){
+                    dupMap = CornZoomer.getDupUnitData(loc_sample_map);
+                }
+                
 
+                
+                
+                 
+
+                sheet.createRow(++dupRow).createCell(0).setCellValue("DupJulien");
+                Map<String, Integer> TestCodeRowMap = new HashMap();
+                for (String testName : test_code) {
+                    sheet.createRow(++dupRow).createCell(0).setCellValue(testName);
+                    TestCodeRowMap.put(testName, dupRow);
+                }
+                Row dupJulienRow = sheet.getRow(dupJunRow);
+                int offset = test_code.length + 4;
+                int dupCol = 1;
+                Row julienRow = sheet.getRow(4);
+                while (julienRow.getCell(dupCol) != null) {
+                    String curJulien = julienRow.getCell(dupCol).getStringCellValue();
+                    if (dupMap.containsKey(curJulien)) {
+
+                        DupData dupData = dupMap.get(curJulien);
+                        dupJulienRow.createCell(dupCol).setCellValue(dupData.getJulienBarcode());
+                        Map<String, Float> dupUnitMap = dupData.getUnitMap();
+
+//                
+                        for (String testCode : dupUnitMap.keySet()) {
+                            int curRow = TestCodeRowMap.get(testCode);
+                            sheet.getRow(curRow).createCell(dupCol).setCellValue(dupUnitMap.get(testCode));
+                            sheet.getRow(curRow - offset).getCell(dupCol).setCellStyle(styleOrange);
+                        }
+                    }
+                    ++dupCol;
+                }
+                
+                
             }
 
         }

@@ -5,6 +5,16 @@
  */
 package Zoomer;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import model.DataBaseCon;
+import model.LXDataBaseCon;
+import model.StringOperation;
+
 /**
  *
  * @author Wei Wang
@@ -86,5 +96,66 @@ public class SoyZoomer extends Zoomer{
         for(int i = 0 ; i < testcode.length ; i++){
             equation_parameter_map.put(testcode[i], equation_parameter[i]);
         }
+    }
+    public static Map<String , DupData> getDupUnitData(Map<String , String[]> loc_sample_map) throws SQLException, Exception{
+        Map<String , DupData> mapUnit = new HashMap();
+        
+        List<Integer> julienList = new ArrayList();
+        for(String[] info : loc_sample_map.values()){
+            julienList.add(Integer.parseInt(info[1]));
+        }
+        String sqlJu = StringOperation.getSampleSql(julienList).toString();
+        
+         Map<String , String> old2NewMap = new HashMap();
+        DataBaseCon db = new LXDataBaseCon();
+        String sql = "SELECT\n" +
+"   group_concat(sd.julien_barcode order by sd.julien_barcode desc) as julien\n" +
+"FROM\n" +
+"    vibrant_america_information.`patient_details` pd\n" +
+"        JOIN\n" +
+"    vibrant_america_information.`sample_data` sd ON sd.`patient_id` = pd.`patient_id`\n" +
+"        JOIN\n" +
+"    vibrant_america_information.`customers_of_patients` cop ON cop.`patient_id` = sd.`patient_id`\n" +
+"        AND cop.`customer_id` = sd.`customer_id`\n" +
+"        join\n" +
+"          vibrant_america_information.`customer_details` cd on  cd.customer_id = sd.customer_id\n" +
+"        AND cop.`customer_id` = sd.`customer_id`\n" +
+"        join vibrant_america_information.selected_test_list slt on slt.sample_id = sd.sample_id\n" +
+"        join `vibrant_america_test_result`.`result_soy_zoomer_panel1` rwp on rwp.sample_id = sd.sample_id \n" +
+"WHERE\n" +
+"   slt.order_soy_zoomer_panel1 != 0 \n" +
+"   group by PD.PATIENT_ID having count(*)>=2 and julien REGEXP '"+ sqlJu.replaceAll(",", "|")  +"'   order by substring(group_concat(sd.julien_barcode order by sd.julien_barcode desc),1,10) desc;";
+        System.out.println(sql);
+        ResultSet rs = db.read(sql);
+        while(rs.next()){
+            String[] tmp = rs.getString(1).split(",");
+            old2NewMap.putIfAbsent(tmp[1], tmp[0]);
+        }
+        
+        List<Integer> newJulienList = new ArrayList();
+        for(String tmp : old2NewMap.keySet()) newJulienList.add(Integer.parseInt(tmp));
+    
+        if(!newJulienList.isEmpty()){
+            String sqlData = 
+    "select julien_barcode , a.* from vibrant_america_information.sample_data as sd join\n" +
+    "`vibrant_america_test_result`.result_soy_zoomer_panel1 as a on sd.sample_id = a.sample_id\n" +
+    " where julien_barcode in ("+ StringOperation.getSampleSql(newJulienList).toString() +");";
+            ResultSet rsData = db.read(sqlData);
+            
+            int col = rsData.getMetaData().getColumnCount();
+            while(rsData.next()){
+                 Map<String ,Float> curMap = new HashMap();
+                 String oldJulien = rsData.getString(1);
+                 String newJulien = old2NewMap.get(oldJulien);
+                 for(int i = 2 ; i <= col ; i++){
+                     String label = rsData.getMetaData().getColumnLabel(i);
+                     if(label.equals("sample_id")) continue;
+                     curMap.put(label , rsData.getFloat(i));
+                 }
+                 mapUnit.put(newJulien , new DupData(oldJulien , curMap));
+            }
+        }
+        db.close();
+        return mapUnit;
     }
 }

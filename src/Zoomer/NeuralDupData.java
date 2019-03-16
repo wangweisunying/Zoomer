@@ -11,17 +11,8 @@ import java.util.Map;
  *
  * @author Wei Wang
  */
-public class NeuralDupData{
-    private Map<String , Float> unitMap;
-    private String julienBarcode;
+public class NeuralDupData extends DupData{
     NeuralDupData(String julienBarcode , Map<String , Float> unitMap){
-        this.unitMap = unitMap;
-        this.julienBarcode = julienBarcode;
-    }
-    public Map<String , Float> getUnitMap(){
-        return this.unitMap;
-    }
-    public String getJulienBarcode(){
-        return this.julienBarcode;
+        super(julienBarcode , unitMap);
     }
 }
